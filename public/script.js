@@ -13,13 +13,6 @@ const errorMessage = document.getElementById('errorMessage');
 const copyBtn = document.getElementById('copyBtn');
 const recentUrls = document.getElementById('recentUrls');
 const themeToggle = document.getElementById('themeToggle');
-const adminBtn = document.getElementById('adminBtn');
-const adminBtnText = document.getElementById('adminBtnText');
-const adminModal = document.getElementById('adminModal');
-const closeModal = document.getElementById('closeModal');
-const adminLoginForm = document.getElementById('adminLoginForm');
-const adminPassword = document.getElementById('adminPassword');
-const adminError = document.getElementById('adminError');
 const pagination = document.getElementById('pagination');
 const prevPage = document.getElementById('prevPage');
 const nextPage = document.getElementById('nextPage');
@@ -28,18 +21,30 @@ const pageInfo = document.getElementById('pageInfo');
 // State
 let isLoading = false;
 let isAdmin = false;
-let adminToken = null;
 let currentPage = 1;
 let totalPages = 1;
 const ITEMS_PER_PAGE = 5;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    checkAdminKey();
     loadRecentUrls();
     loadStatistics();
     initTheme();
-    initAdmin();
 });
+
+// Check if admin key is in URL query parameters
+function checkAdminKey() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const key = urlParams.get('key');
+    
+    // Check if key matches admin password (admin123 by default)
+    if (key === 'admin123') {
+        isAdmin = true;
+    } else {
+        isAdmin = false;
+    }
+}
 
 // Theme Management
 function initTheme() {
@@ -74,95 +79,6 @@ function updateThemeIcon(isDark) {
 
 // Theme toggle event listener
 themeToggle.addEventListener('click', toggleTheme);
-
-// Admin functionality
-function initAdmin() {
-    // Check if admin token exists in localStorage
-    const savedToken = localStorage.getItem('adminToken');
-    if (savedToken) {
-        adminToken = savedToken;
-        isAdmin = true;
-        updateAdminUI();
-    }
-}
-
-function updateAdminUI() {
-    if (isAdmin) {
-        adminBtnText.textContent = 'Logout';
-        adminBtn.classList.add('admin-logged-in');
-    } else {
-        adminBtnText.textContent = 'Admin';
-        adminBtn.classList.remove('admin-logged-in');
-    }
-    // Reload URLs to show/hide delete buttons
-    loadRecentUrls();
-}
-
-// Admin button click
-adminBtn.addEventListener('click', () => {
-    if (isAdmin) {
-        // Logout
-        isAdmin = false;
-        adminToken = null;
-        localStorage.removeItem('adminToken');
-        updateAdminUI();
-    } else {
-        // Show login modal
-        adminModal.style.display = 'flex';
-        adminPassword.focus();
-    }
-});
-
-// Close modal
-closeModal.addEventListener('click', () => {
-    adminModal.style.display = 'none';
-    adminPassword.value = '';
-    adminError.style.display = 'none';
-});
-
-// Close modal on outside click
-adminModal.addEventListener('click', (e) => {
-    if (e.target === adminModal) {
-        adminModal.style.display = 'none';
-        adminPassword.value = '';
-        adminError.style.display = 'none';
-    }
-});
-
-// Admin login form
-adminLoginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const password = adminPassword.value;
-    
-    try {
-        const response = await fetch('/api/admin/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ password }),
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            isAdmin = true;
-            adminToken = data.token;
-            localStorage.setItem('adminToken', adminToken);
-            adminModal.style.display = 'none';
-            adminPassword.value = '';
-            adminError.style.display = 'none';
-            updateAdminUI();
-        } else {
-            adminError.textContent = data.error || 'Invalid password';
-            adminError.style.display = 'block';
-        }
-    } catch (error) {
-        adminError.textContent = 'Login failed. Please try again.';
-        adminError.style.display = 'block';
-    }
-});
 
 // Handle form submission
 urlForm.addEventListener('submit', async (e) => {
@@ -425,23 +341,20 @@ async function deleteUrl(shortCode) {
     }
     
     try {
-        const response = await fetch(`/api/urls/${shortCode}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${adminToken}`
-            }
+        // Get the admin key from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const key = urlParams.get('key');
+        
+        const response = await fetch(`/api/urls/${shortCode}?key=${key}`, {
+            method: 'DELETE'
         });
         
         if (!response.ok) {
             const data = await response.json();
             
-            // If unauthorized, clear admin state
+            // If unauthorized, refresh the page to re-check admin status
             if (response.status === 401) {
-                isAdmin = false;
-                adminToken = null;
-                localStorage.removeItem('adminToken');
-                updateAdminUI();
-                alert('Session expired. Please login again.');
+                alert('Unauthorized. Please check your admin key.');
                 return;
             }
             

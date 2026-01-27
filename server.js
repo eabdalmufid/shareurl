@@ -5,16 +5,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const validator = require('validator');
 const { nanoid } = require('nanoid');
-const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5002;
 const DB_FILE = path.join(__dirname, 'urls.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-
-// Store active admin sessions (in-memory for this simple app)
-// In production, use a proper session store like Redis
-const activeSessions = new Set();
 
 // Configuration constants
 const MAX_DATABASE_SIZE = 10000;
@@ -302,58 +297,16 @@ app.get('/api/stats/:shortCode', (req, res) => {
   }
 });
 
-// API: Admin authentication
-app.post('/api/admin/login', (req, res) => {
-  try {
-    const { password } = req.body;
-    
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
-    }
-    
-    if (password === ADMIN_PASSWORD) {
-      // Generate a secure session token
-      const token = crypto.randomBytes(32).toString('hex');
-      
-      // Store token in active sessions
-      activeSessions.add(token);
-      
-      res.json({ 
-        success: true, 
-        token,
-        message: 'Authentication successful' 
-      });
-    } else {
-      res.status(401).json({ error: 'Invalid password' });
-    }
-  } catch (error) {
-    console.error('Error during authentication:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Middleware to verify admin token
-function verifyAdmin(req, res, next) {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Admin authentication required' });
-  }
-  
-  const token = authHeader.substring(7);
-  
-  // Validate token exists in active sessions
-  if (!activeSessions.has(token)) {
-    return res.status(401).json({ error: 'Invalid or expired authentication token' });
-  }
-  
-  next();
-}
-
-// API: Delete a short URL (Admin only)
-app.delete('/api/urls/:shortCode', verifyAdmin, (req, res) => {
+// API: Delete a short URL (Admin only with query key)
+app.delete('/api/urls/:shortCode', (req, res) => {
   try {
     const { shortCode } = req.params;
+    const { key } = req.query;
+    
+    // Check admin key from query parameter
+    if (!key || key !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
     
     // Validate short code format
     if (!shortCode || !isValidShortCode(shortCode)) {

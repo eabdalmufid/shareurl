@@ -72,11 +72,11 @@ http://localhost:5002
    - Click on any short URL to visit the original destination
 
 4. **Admin Functions (Prevent Malicious Links):**
-   - Click the "Admin" button in the top right
-   - Enter your admin password (default: `admin123`)
-   - Delete buttons will appear next to each URL
+   - Access admin mode by adding `?key=admin123` to the URL
+   - Example: `http://localhost:5002?key=admin123`
+   - Delete buttons will appear next to each URL when the correct key is provided
    - Delete any malicious, gambling, or inappropriate links
-   - Click "Logout" to exit admin mode
+   - **Note:** Change the default admin key in production via the `ADMIN_PASSWORD` environment variable
 
 ## 🛠️ Technology Stack
 
@@ -178,20 +178,10 @@ GET /api/urls
 GET /api/stats/:shortCode
 ```
 
-### Admin Login
-```
-POST /api/admin/login
-Content-Type: application/json
-
-{
-  "password": "admin123"
-}
-```
 
 ### Delete Short URL (Admin Only)
 ```
-DELETE /api/urls/:shortCode
-Authorization: Bearer {token}
+DELETE /api/urls/:shortCode?key=admin123
 ```
 
 ### Redirect
