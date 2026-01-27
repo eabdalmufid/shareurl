@@ -124,7 +124,7 @@ copyBtn.addEventListener('click', async () => {
             copyBtn.querySelector('.copy-text').textContent = originalText;
         }, 2000);
     } catch (error) {
-        // Fallback for older browsers
+        // Fallback for older browsers (deprecated but needed for compatibility)
         shortUrlDisplay.select();
         document.execCommand('copy');
         

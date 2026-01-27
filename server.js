@@ -9,6 +9,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_FILE = path.join(__dirname, 'urls.json');
 
+// Configuration constants
+const MAX_DATABASE_SIZE = 10000;
+const MAX_URL_LENGTH = 2048;
+const MIN_URL_LENGTH = 10;
+const MAX_SHORTCODE_LENGTH = 20;
+const MAX_REQUEST_SIZE = '10kb';
+
 // Security Middleware - Helmet for HTTP headers security
 app.use(helmet({
   contentSecurityPolicy: {
@@ -50,8 +57,8 @@ app.use(limiter);
 app.use('/api/shorten', shortenLimiter);
 
 // Body parsing middleware with size limits
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(express.json({ limit: MAX_REQUEST_SIZE }));
+app.use(express.urlencoded({ extended: true, limit: MAX_REQUEST_SIZE }));
 
 // Static files
 app.use(express.static('public'));
@@ -97,6 +104,20 @@ function sanitizeInput(input) {
   return validator.escape(input.trim());
 }
 
+// Check if IP is in private range
+function isPrivateIP(hostname) {
+  const patterns = [
+    /^localhost$/i,
+    /^127\.\d+\.\d+\.\d+$/,
+    /^0\.0\.0\.0$/,
+    /^192\.168\.\d+\.\d+$/,
+    /^10\.\d+\.\d+\.\d+$/,
+    /^172\.(1[6-9]|2[0-9]|3[01])\.\d+\.\d+$/  // 172.16.0.0 - 172.31.255.255
+  ];
+  
+  return patterns.some(pattern => pattern.test(hostname));
+}
+
 // Validate URL with enhanced security checks
 function isValidURL(string) {
   try {
@@ -118,30 +139,7 @@ function isValidURL(string) {
     const url = new URL(sanitized);
     
     // Block localhost and private IP addresses for security
-    const hostname = url.hostname.toLowerCase();
-    if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '0.0.0.0' ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('10.') ||
-      hostname.startsWith('172.16.') ||
-      hostname.startsWith('172.17.') ||
-      hostname.startsWith('172.18.') ||
-      hostname.startsWith('172.19.') ||
-      hostname.startsWith('172.20.') ||
-      hostname.startsWith('172.21.') ||
-      hostname.startsWith('172.22.') ||
-      hostname.startsWith('172.23.') ||
-      hostname.startsWith('172.24.') ||
-      hostname.startsWith('172.25.') ||
-      hostname.startsWith('172.26.') ||
-      hostname.startsWith('172.27.') ||
-      hostname.startsWith('172.28.') ||
-      hostname.startsWith('172.29.') ||
-      hostname.startsWith('172.30.') ||
-      hostname.startsWith('172.31.')
-    ) {
+    if (isPrivateIP(url.hostname.toLowerCase())) {
       return false;
     }
     
@@ -167,11 +165,11 @@ app.post('/api/shorten', (req, res) => {
   
   // Trim and limit URL length to prevent abuse
   url = url.trim();
-  if (url.length > 2048) {
-    return res.status(400).json({ error: 'URL too long. Maximum 2048 characters allowed.' });
+  if (url.length > MAX_URL_LENGTH) {
+    return res.status(400).json({ error: `URL too long. Maximum ${MAX_URL_LENGTH} characters allowed.` });
   }
   
-  if (url.length < 10) {
+  if (url.length < MIN_URL_LENGTH) {
     return res.status(400).json({ error: 'URL too short. Please provide a valid URL.' });
   }
   
@@ -184,7 +182,7 @@ app.post('/api/shorten', (req, res) => {
     const db = readDB();
     
     // Check database size limit to prevent abuse
-    if (db.urls.length >= 10000) {
+    if (db.urls.length >= MAX_DATABASE_SIZE) {
       return res.status(429).json({ error: 'Database limit reached. Please contact administrator.' });
     }
     
@@ -263,7 +261,7 @@ app.get('/:shortCode', (req, res) => {
         shortCode.includes('..') || 
         shortCode.includes('/') || 
         shortCode.includes('\\') ||
-        shortCode.length > 20) {
+        shortCode.length > MAX_SHORTCODE_LENGTH) {
       return res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
     }
     
