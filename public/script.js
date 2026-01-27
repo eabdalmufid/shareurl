@@ -12,6 +12,7 @@ const originalUrlDisplay = document.getElementById('originalUrlDisplay');
 const errorMessage = document.getElementById('errorMessage');
 const copyBtn = document.getElementById('copyBtn');
 const recentUrls = document.getElementById('recentUrls');
+const themeToggle = document.getElementById('themeToggle');
 
 // State
 let isLoading = false;
@@ -20,7 +21,40 @@ let isLoading = false;
 document.addEventListener('DOMContentLoaded', () => {
     loadRecentUrls();
     loadStatistics();
+    initTheme();
 });
+
+// Theme Management
+function initTheme() {
+    // Check for saved theme preference or default to light mode
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        updateThemeIcon(true);
+    }
+}
+
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateThemeIcon(isDark);
+}
+
+function updateThemeIcon(isDark) {
+    const sunIcon = themeToggle.querySelector('.sun-icon');
+    const moonIcon = themeToggle.querySelector('.moon-icon');
+    
+    if (isDark) {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    } else {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+    }
+}
+
+// Theme toggle event listener
+themeToggle.addEventListener('click', toggleTheme);
 
 // Handle form submission
 urlForm.addEventListener('submit', async (e) => {
