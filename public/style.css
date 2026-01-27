@@ -166,6 +166,33 @@ body {
     padding-left: var(--spacing-sm);
 }
 
+/* Custom Code Input */
+.custom-code-group {
+    margin-bottom: var(--spacing-md);
+}
+
+#customCode {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.95rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+#customCode:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.custom-hint {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: var(--spacing-xs);
+    padding-left: var(--spacing-sm);
+}
+
 /* Result Section */
 .result-section {
     margin-top: var(--spacing-lg);
