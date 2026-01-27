@@ -47,30 +47,28 @@
             <!-- Input Section -->
             <section class="url-input-section">
                 <form id="urlForm" class="url-form">
-                    <div class="input-group">
-                        <input 
-                            type="url" 
-                            id="urlInput" 
-                            placeholder="Enter your long URL here..." 
-                            required
-                            autocomplete="off"
-                        >
-                        <button type="submit" id="shortenBtn" class="btn-primary">
-                            <span class="btn-text">Shorten</span>
-                            <span class="btn-loading" style="display: none;">
-                                <span class="spinner"></span>
-                            </span>
-                        </button>
-                    </div>
-                    <div class="custom-code-group">
-                        <input 
-                            type="text" 
-                            id="customCode" 
-                            placeholder="Custom code (optional, e.g., mylink)" 
-                            autocomplete="off"
-                            maxlength="20"
-                        >
-                    </div>
+                    <input 
+                        type="url" 
+                        id="urlInput" 
+                        placeholder="Enter your long URL here..." 
+                        required
+                        autocomplete="off"
+                        class="url-input-field"
+                    >
+                    <input 
+                        type="text" 
+                        id="customCode" 
+                        placeholder="Custom code (optional, e.g., mylink)" 
+                        autocomplete="off"
+                        maxlength="20"
+                        class="custom-code-field"
+                    >
+                    <button type="submit" id="shortenBtn" class="btn-primary">
+                        <span class="btn-text">Shorten</span>
+                        <span class="btn-loading" style="display: none;">
+                            <span class="spinner"></span>
+                        </span>
+                    </button>
                 </form>
 
                 <!-- Result Section -->
