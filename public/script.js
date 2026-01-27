@@ -44,6 +44,8 @@ function updateThemeIcon(isDark) {
     const sunIcon = themeToggle.querySelector('.sun-icon');
     const moonIcon = themeToggle.querySelector('.moon-icon');
     
+    if (!sunIcon || !moonIcon) return;
+    
     if (isDark) {
         sunIcon.style.display = 'none';
         moonIcon.style.display = 'block';
