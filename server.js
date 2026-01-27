@@ -4,7 +4,7 @@ const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const validator = require('validator');
-const shortid = require('shortid');
+const { nanoid } = require('nanoid');
 
 const app = express();
 const PORT = process.env.PORT || 5002;
@@ -86,9 +86,10 @@ function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
-// Generate random short code using shortid
+// Generate random short code using nanoid
 function generateShortCode() {
-  return shortid.generate();
+  // Generate a 8-character ID using nanoid (URL-safe characters)
+  return nanoid(8);
 }
 
 // Validate custom short code
@@ -190,10 +191,10 @@ app.post('/api/shorten', (req, res) => {
   }
   
   // Validate custom code if provided
-  if (customCode !== undefined && customCode !== null && customCode !== '') {
+  if (customCode && customCode.trim()) {
     customCode = customCode.trim();
     if (!isValidShortCode(customCode)) {
-      return res.status(400).json({ error: 'Invalid custom code. Use 3-20 alphanumeric characters or hyphens only.' });
+      return res.status(400).json({ error: 'Invalid custom code. Use 3-20 alphanumeric characters, hyphens, or underscores.' });
     }
   } else {
     customCode = null;
@@ -227,13 +228,18 @@ app.post('/api/shorten', (req, res) => {
       }
       shortCode = customCode;
     } else {
-      // Generate unique short code using shortid
-      // shortid generates virtually unique IDs, but we still check for safety
+      // Generate unique short code using nanoid
+      // nanoid generates virtually unique IDs, but we still check for safety
       shortCode = generateShortCode();
       let attempts = 0;
       while (db.urls.find(item => item.shortCode === shortCode) && attempts < 5) {
         shortCode = generateShortCode();
         attempts++;
+      }
+      
+      // Final check to ensure uniqueness
+      if (db.urls.find(item => item.shortCode === shortCode)) {
+        return res.status(500).json({ error: 'Unable to generate unique short code. Please try again.' });
       }
     }
     
