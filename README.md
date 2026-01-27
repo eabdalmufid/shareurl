@@ -7,6 +7,8 @@ A simple, lightweight, and modern URL shortener application with a beautiful res
 - 🎨 **Modern & Clean Design** - Beautiful gradient UI with smooth animations
 - 📱 **Fully Responsive** - Works perfectly on mobile, tablet, and desktop
 - ⚡ **Lightning Fast** - Instant URL shortening with JSON-based database
+- 🎯 **Random Short Codes** - Generates secure random strings for each URL
+- ✏️ **Custom Short Codes** - Optionally create custom short URLs (e.g., mylink)
 - 🔒 **URL Validation** - Ensures all URLs are valid before shortening
 - 🛡️ **Security Hardened** - Protected against XSS, SSRF, DoS, and injection attacks
 - 📊 **Click Tracking** - Track how many times your short URLs are used
@@ -41,13 +43,14 @@ npm start
 
 4. Open your browser and visit:
 ```
-http://localhost:3000
+http://localhost:5002
 ```
 
 ## 📖 How to Use
 
 1. **Shorten a URL:**
    - Enter your long URL in the input field
+   - Optionally, enter a custom code (e.g., "mylink") or leave empty for a random code
    - Click the "Shorten" button
    - Your short URL will be generated instantly
 
@@ -144,7 +147,8 @@ POST /api/shorten
 Content-Type: application/json
 
 {
-  "url": "https://example.com/very-long-url"
+  "url": "https://example.com/very-long-url",
+  "customCode": "mylink"  // Optional: custom short code
 }
 ```
 
@@ -199,7 +203,7 @@ MIT License - feel free to use this project for your portfolio!
 
 ## 👨‍💻 Author
 
-Built with ❤️ as a portfolio project
+Built with ❤️ by [Affidev](https://github.com/eabdalmufid)
 
 ---
 

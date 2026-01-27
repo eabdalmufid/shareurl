@@ -1,6 +1,7 @@
 // DOM Elements
 const urlForm = document.getElementById('urlForm');
 const urlInput = document.getElementById('urlInput');
+const customCode = document.getElementById('customCode');
 const shortenBtn = document.getElementById('shortenBtn');
 const btnText = shortenBtn.querySelector('.btn-text');
 const btnLoading = shortenBtn.querySelector('.btn-loading');
@@ -27,27 +28,33 @@ urlForm.addEventListener('submit', async (e) => {
     if (isLoading) return;
     
     const url = urlInput.value.trim();
+    const custom = customCode.value.trim();
     
     if (!url) {
         showError('Please enter a URL');
         return;
     }
     
-    await shortenUrl(url);
+    await shortenUrl(url, custom);
 });
 
 // Shorten URL function
-async function shortenUrl(url) {
+async function shortenUrl(url, custom) {
     setLoading(true);
     hideMessages();
     
     try {
+        const body = { url };
+        if (custom) {
+            body.customCode = custom;
+        }
+        
         const response = await fetch('/api/shorten', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url }),
+            body: JSON.stringify(body),
         });
         
         const data = await response.json();
@@ -57,12 +64,17 @@ async function shortenUrl(url) {
             if (response.status === 429) {
                 throw new Error('⏱️ ' + (data.error || 'Too many requests. Please wait a moment and try again.'));
             }
+            // Handle conflict (custom code already in use)
+            if (response.status === 409) {
+                throw new Error('⚠️ ' + data.error);
+            }
             throw new Error(data.error || 'Failed to shorten URL');
         }
         
         showResult(data);
         loadRecentUrls();
         urlInput.value = '';
+        customCode.value = '';
     } catch (error) {
         // Handle network errors
         if (error.message.includes('Failed to fetch')) {

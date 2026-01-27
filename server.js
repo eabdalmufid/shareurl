@@ -4,6 +4,7 @@ const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const validator = require('validator');
+const shortid = require('shortid');
 
 const app = express();
 const PORT = process.env.PORT || 5002;
@@ -85,20 +86,26 @@ function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
-// Generate short code
-function generateShortCode(counter) {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  let num = counter;
+// Generate random short code using shortid
+function generateShortCode() {
+  return shortid.generate();
+}
+
+// Validate custom short code
+function isValidShortCode(code) {
+  if (!code || typeof code !== 'string') return false;
   
-  if (num === 0) return chars[0];
+  // Check length (3-20 characters)
+  if (code.length < 3 || code.length > MAX_SHORTCODE_LENGTH) return false;
   
-  while (num > 0) {
-    code = chars[num % chars.length] + code;
-    num = Math.floor(num / chars.length);
-  }
+  // Only allow alphanumeric characters, hyphens, and underscores (shortid compatible)
+  const validPattern = /^[a-zA-Z0-9_-]+$/;
+  if (!validPattern.test(code)) return false;
   
-  return code || chars[0];
+  // Prevent dangerous patterns
+  if (code.includes('..') || code.includes('/') || code.includes('\\')) return false;
+  
+  return true;
 }
 
 // Sanitize input to prevent XSS and injection attacks
@@ -155,7 +162,7 @@ function isValidURL(string) {
 
 // API: Create short URL
 app.post('/api/shorten', (req, res) => {
-  let { url } = req.body;
+  let { url, customCode } = req.body;
   
   // Input validation
   if (!url) {
@@ -182,6 +189,16 @@ app.post('/api/shorten', (req, res) => {
     return res.status(400).json({ error: 'Invalid URL format. Please include http:// or https:// and use a public URL.' });
   }
   
+  // Validate custom code if provided
+  if (customCode !== undefined && customCode !== null && customCode !== '') {
+    customCode = customCode.trim();
+    if (!isValidShortCode(customCode)) {
+      return res.status(400).json({ error: 'Invalid custom code. Use 3-20 alphanumeric characters or hyphens only.' });
+    }
+  } else {
+    customCode = null;
+  }
+  
   try {
     const db = readDB();
     
@@ -200,9 +217,28 @@ app.post('/api/shorten', (req, res) => {
       });
     }
     
+    // Generate or use custom short code
+    let shortCode;
+    if (customCode) {
+      // Check if custom code already exists
+      const codeExists = db.urls.find(item => item.shortCode === customCode);
+      if (codeExists) {
+        return res.status(409).json({ error: 'Custom code already in use. Please choose another.' });
+      }
+      shortCode = customCode;
+    } else {
+      // Generate unique short code using shortid
+      // shortid generates virtually unique IDs, but we still check for safety
+      shortCode = generateShortCode();
+      let attempts = 0;
+      while (db.urls.find(item => item.shortCode === shortCode) && attempts < 5) {
+        shortCode = generateShortCode();
+        attempts++;
+      }
+    }
+    
     // Create new short URL
-    db.counter += 1;
-    const shortCode = generateShortCode(db.counter);
+    db.counter = (db.counter || 0) + 1;
     
     const newUrl = {
       id: db.counter,
