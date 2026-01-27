@@ -296,6 +296,34 @@ app.get('/api/stats/:shortCode', (req, res) => {
   }
 });
 
+// API: Delete a short URL
+app.delete('/api/urls/:shortCode', (req, res) => {
+  try {
+    const { shortCode } = req.params;
+    
+    // Validate short code format
+    if (!shortCode || !isValidShortCode(shortCode)) {
+      return res.status(400).json({ error: 'Invalid short code' });
+    }
+    
+    const db = readDB();
+    const urlIndex = db.urls.findIndex(item => item.shortCode === shortCode);
+    
+    if (urlIndex === -1) {
+      return res.status(404).json({ error: 'Short URL not found' });
+    }
+    
+    // Remove the URL from the database
+    db.urls.splice(urlIndex, 1);
+    writeDB(db);
+    
+    res.json({ message: 'Short URL deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting URL:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Redirect short URL
 app.get('/:shortCode', (req, res) => {
   try {

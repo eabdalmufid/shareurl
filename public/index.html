@@ -24,6 +24,22 @@
                 <h1>Short URL</h1>
             </div>
             <p class="tagline">Simple, Fast & Modern URL Shortener</p>
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="5" stroke-width="2"/>
+                    <line x1="12" y1="1" x2="12" y2="3" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="12" y1="21" x2="12" y2="23" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="1" y1="12" x2="3" y2="12" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="21" y1="12" x2="23" y2="12" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: none;">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </header>
 
         <!-- Main Content -->
@@ -31,32 +47,28 @@
             <!-- Input Section -->
             <section class="url-input-section">
                 <form id="urlForm" class="url-form">
-                    <div class="input-group">
-                        <input 
-                            type="url" 
-                            id="urlInput" 
-                            placeholder="Enter your long URL here..." 
-                            required
-                            autocomplete="off"
-                        >
-                        <button type="submit" id="shortenBtn" class="btn-primary">
-                            <span class="btn-text">Shorten</span>
-                            <span class="btn-loading" style="display: none;">
-                                <span class="spinner"></span>
-                            </span>
-                        </button>
-                    </div>
-                    <div class="custom-code-group">
-                        <input 
-                            type="text" 
-                            id="customCode" 
-                            placeholder="Custom code (optional, e.g., mylink)" 
-                            autocomplete="off"
-                            maxlength="20"
-                        >
-                        <p class="custom-hint">Leave empty for random code, or enter 3-20 characters (a-z, 0-9, -, _)</p>
-                    </div>
-                    <p class="input-hint">Enter a URL starting with http:// or https://</p>
+                    <input 
+                        type="url" 
+                        id="urlInput" 
+                        placeholder="Enter your long URL here..." 
+                        required
+                        autocomplete="off"
+                        class="url-input-field"
+                    >
+                    <input 
+                        type="text" 
+                        id="customCode" 
+                        placeholder="Custom code (optional, e.g., mylink)" 
+                        autocomplete="off"
+                        maxlength="20"
+                        class="custom-code-field"
+                    >
+                    <button type="submit" id="shortenBtn" class="btn-primary">
+                        <span class="btn-text">Shorten</span>
+                        <span class="btn-loading" style="display: none;">
+                            <span class="spinner"></span>
+                        </span>
+                    </button>
                 </form>
 
                 <!-- Result Section -->
@@ -115,6 +127,25 @@
                     <div class="feature-icon">🔒</div>
                     <h3>Simple & Secure</h3>
                     <p>Clean interface with reliable URL validation</p>
+                </div>
+            </section>
+
+            <!-- Statistics Section -->
+            <section class="stats-section">
+                <h2>Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalUrls">0</div>
+                        <div class="stat-label">Total URLs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalClicks">0</div>
+                        <div class="stat-label">Total Clicks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avgClicks">0</div>
+                        <div class="stat-label">Avg Clicks/URL</div>
+                    </div>
                 </div>
             </section>
 
