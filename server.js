@@ -9,6 +9,7 @@ const { nanoid } = require('nanoid');
 const app = express();
 const PORT = process.env.PORT || 5002;
 const DB_FILE = path.join(__dirname, 'urls.json');
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 // Configuration constants
 const MAX_DATABASE_SIZE = 10000;
@@ -296,10 +297,16 @@ app.get('/api/stats/:shortCode', (req, res) => {
   }
 });
 
-// API: Delete a short URL
+// API: Delete a short URL (Admin only with query key)
 app.delete('/api/urls/:shortCode', (req, res) => {
   try {
     const { shortCode } = req.params;
+    const { key } = req.query;
+    
+    // Check admin key from query parameter
+    if (!key || key !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
     
     // Validate short code format
     if (!shortCode || !isValidShortCode(shortCode)) {

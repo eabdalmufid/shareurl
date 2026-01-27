@@ -13,7 +13,8 @@ A simple, lightweight, and modern URL shortener application with a beautiful res
 - 🛡️ **Security Hardened** - Protected against XSS, SSRF, DoS, and injection attacks
 - 📊 **Click Tracking** - Track how many times your short URLs are used
 - 📋 **One-Click Copy** - Easy copying of shortened URLs
-- 🎯 **Recent URLs** - View your 5 most recent shortened URLs
+- 🎯 **Recent URLs with Pagination** - View recent URLs with 5 per page
+- 👨‍💼 **Admin Panel** - Admin-only delete functionality to prevent malicious links
 - ⏱️ **Rate Limited** - Prevents abuse with intelligent rate limiting
 
 ## 🚀 Quick Start
@@ -36,12 +37,19 @@ cd shorturl
 npm install
 ```
 
-3. Start the server:
+3. (Optional) Configure admin password:
+```bash
+# Create a .env file or set environment variable
+echo "ADMIN_PASSWORD=your-secure-password" > .env
+# Default password is 'admin123' if not configured
+```
+
+4. Start the server:
 ```bash
 npm start
 ```
 
-4. Open your browser and visit:
+5. Open your browser and visit:
 ```
 http://localhost:5002
 ```
@@ -59,8 +67,16 @@ http://localhost:5002
    - The URL is now in your clipboard
 
 3. **View Recent URLs:**
-   - Scroll down to see your 5 most recent shortened URLs
+   - Scroll down to see recent shortened URLs (5 per page)
+   - Use pagination controls to navigate through all URLs
    - Click on any short URL to visit the original destination
+
+4. **Admin Functions (Prevent Malicious Links):**
+   - Access admin mode by adding `?key=admin123` to the URL
+   - Example: `http://localhost:5002?key=admin123`
+   - Delete buttons will appear next to each URL when the correct key is provided
+   - Delete any malicious, gambling, or inappropriate links
+   - **Note:** Change the default admin key in production via the `ADMIN_PASSWORD` environment variable
 
 ## 🛠️ Technology Stack
 
@@ -160,6 +176,12 @@ GET /api/urls
 ### Get Stats
 ```
 GET /api/stats/:shortCode
+```
+
+
+### Delete Short URL (Admin Only)
+```
+DELETE /api/urls/:shortCode?key=admin123
 ```
 
 ### Redirect
