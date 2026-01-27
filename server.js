@@ -6,7 +6,7 @@ const rateLimit = require('express-rate-limit');
 const validator = require('validator');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5002;
 const DB_FILE = path.join(__dirname, 'urls.json');
 
 // Configuration constants
@@ -15,6 +15,10 @@ const MAX_URL_LENGTH = 2048;
 const MIN_URL_LENGTH = 10;
 const MAX_SHORTCODE_LENGTH = 20;
 const MAX_REQUEST_SIZE = '10kb';
+
+// Trust proxy - required for proper rate limiting behind reverse proxies
+// Set to 1 to trust the first proxy (recommended for most deployments)
+app.set('trust proxy', 1);
 
 // Security Middleware - Helmet for HTTP headers security
 app.use(helmet({
