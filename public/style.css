@@ -339,6 +339,57 @@ body {
     color: var(--text-secondary);
 }
 
+/* Statistics Section */
+.stats-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.stats-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: white;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-xs);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
 /* Recent URLs Section */
 .recent-section {
     margin-bottom: var(--spacing-xl);
@@ -390,6 +441,13 @@ body {
     font-weight: 600;
     color: var(--primary);
     word-break: break-all;
+    flex: 1;
+}
+
+.url-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .url-stats {
@@ -399,6 +457,31 @@ body {
     font-size: 0.875rem;
     color: var(--text-secondary);
     white-space: nowrap;
+}
+
+.btn-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs);
+    background: transparent;
+    color: var(--error);
+    border: 1px solid var(--error);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 32px;
+    height: 32px;
+}
+
+.btn-delete:hover {
+    background: var(--error);
+    color: white;
+    transform: scale(1.05);
+}
+
+.btn-delete:active {
+    transform: scale(0.95);
 }
 
 .url-original-text {

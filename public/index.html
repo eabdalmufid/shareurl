@@ -54,9 +54,7 @@
                             autocomplete="off"
                             maxlength="20"
                         >
-                        <p class="custom-hint">Leave empty for random code, or enter 3-20 characters (a-z, 0-9, -, _)</p>
                     </div>
-                    <p class="input-hint">Enter a URL starting with http:// or https://</p>
                 </form>
 
                 <!-- Result Section -->
@@ -115,6 +113,28 @@
                     <div class="feature-icon">🔒</div>
                     <h3>Simple & Secure</h3>
                     <p>Clean interface with reliable URL validation</p>
+                </div>
+            </section>
+
+            <!-- Statistics Section -->
+            <section class="stats-section">
+                <h2>Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🔗</div>
+                        <div class="stat-value" id="totalUrls">0</div>
+                        <div class="stat-label">Total URLs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👆</div>
+                        <div class="stat-value" id="totalClicks">0</div>
+                        <div class="stat-label">Total Clicks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value" id="avgClicks">0</div>
+                        <div class="stat-label">Avg Clicks/URL</div>
+                    </div>
                 </div>
             </section>
 

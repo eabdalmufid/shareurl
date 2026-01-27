@@ -19,6 +19,7 @@ let isLoading = false;
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadRecentUrls();
+    loadStatistics();
 });
 
 // Handle form submission
@@ -166,6 +167,17 @@ async function loadRecentUrls() {
             .slice(0, 5);
         
         recentUrls.innerHTML = recentList.map(url => createUrlItem(url)).join('');
+        
+        // Add event listeners to delete buttons
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const shortCode = btn.getAttribute('data-shortcode');
+                deleteUrl(shortCode);
+            });
+        });
+        
+        // Update statistics
+        loadStatistics();
     } catch (error) {
         console.error('Error loading recent URLs:', error);
     }
@@ -181,15 +193,25 @@ function createUrlItem(url) {
     });
     
     return `
-        <div class="url-item">
+        <div class="url-item" data-shortcode="${url.shortCode}">
             <div class="url-item-header">
                 <a href="${shortUrl}" class="url-short" target="_blank">${shortUrl}</a>
-                <div class="url-stats">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/>
-                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2"/>
-                    </svg>
-                    ${url.clicks} ${url.clicks === 1 ? 'click' : 'clicks'}
+                <div class="url-actions">
+                    <div class="url-stats">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/>
+                            <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2"/>
+                        </svg>
+                        ${url.clicks} ${url.clicks === 1 ? 'click' : 'clicks'}
+                    </div>
+                    <button class="btn-delete" data-shortcode="${url.shortCode}" title="Delete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="3 6 5 6 21 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="10" y1="11" x2="10" y2="17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="14" y1="11" x2="14" y2="17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
             <div class="url-original-text" title="${url.originalUrl}">${url.originalUrl}</div>
@@ -202,3 +224,45 @@ function createUrlItem(url) {
 
 // Auto-focus input on page load
 urlInput.focus();
+
+// Delete URL function
+async function deleteUrl(shortCode) {
+    if (!confirm('Are you sure you want to delete this short URL?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/urls/${shortCode}`, {
+            method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to delete URL');
+        }
+        
+        // Reload recent URLs and statistics
+        await loadRecentUrls();
+    } catch (error) {
+        alert('Error deleting URL: ' + error.message);
+    }
+}
+
+// Load statistics
+async function loadStatistics() {
+    try {
+        const response = await fetch('/api/urls');
+        const urls = await response.json();
+        
+        const totalUrls = urls.length;
+        const totalClicks = urls.reduce((sum, url) => sum + (url.clicks || 0), 0);
+        const avgClicks = totalUrls > 0 ? Math.round(totalClicks / totalUrls) : 0;
+        
+        // Update statistics display
+        document.getElementById('totalUrls').textContent = totalUrls;
+        document.getElementById('totalClicks').textContent = totalClicks;
+        document.getElementById('avgClicks').textContent = avgClicks;
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+    }
+}
