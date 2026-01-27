@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Short URL - Simple & Modern URL Shortener</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="40" height="40" rx="8" fill="url(#gradient)"/>
+                    <path d="M12 20h16M20 12v16" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#667eea"/>
+                            <stop offset="100%" stop-color="#764ba2"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>Short URL</h1>
+            </div>
+            <p class="tagline">Simple, Fast & Modern URL Shortener</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Input Section -->
+            <section class="url-input-section">
+                <form id="urlForm" class="url-form">
+                    <div class="input-group">
+                        <input 
+                            type="url" 
+                            id="urlInput" 
+                            placeholder="Enter your long URL here..." 
+                            required
+                            autocomplete="off"
+                        >
+                        <button type="submit" id="shortenBtn" class="btn-primary">
+                            <span class="btn-text">Shorten</span>
+                            <span class="btn-loading" style="display: none;">
+                                <span class="spinner"></span>
+                            </span>
+                        </button>
+                    </div>
+                    <p class="input-hint">Enter a URL starting with http:// or https://</p>
+                </form>
+
+                <!-- Result Section -->
+                <div id="resultSection" class="result-section" style="display: none;">
+                    <div class="result-card">
+                        <div class="result-header">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M9 11l3 3L22 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Success! Your short URL is ready</span>
+                        </div>
+                        <div class="result-url">
+                            <input type="text" id="shortUrlDisplay" readonly>
+                            <button id="copyBtn" class="btn-copy" title="Copy to clipboard">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/>
+                                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/>
+                                </svg>
+                                <span class="copy-text">Copy</span>
+                            </button>
+                        </div>
+                        <div class="result-original">
+                            <span class="label">Original:</span>
+                            <span id="originalUrlDisplay" class="url-text"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Section -->
+                <div id="errorSection" class="error-section" style="display: none;">
+                    <div class="error-card">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                            <line x1="12" y1="8" x2="12" y2="12" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span id="errorMessage"></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Create short URLs instantly with our optimized system</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Mobile Friendly</h3>
+                    <p>Works perfectly on all devices and screen sizes</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Simple & Secure</h3>
+                    <p>Clean interface with reliable URL validation</p>
+                </div>
+            </section>
+
+            <!-- Recent URLs Section -->
+            <section class="recent-section">
+                <h2>Recent Short URLs</h2>
+                <div id="recentUrls" class="recent-urls">
+                    <p class="no-urls">No URLs created yet. Create your first short URL above!</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built by Affidev</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
