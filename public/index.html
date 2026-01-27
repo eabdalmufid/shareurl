@@ -24,22 +24,31 @@
                 <h1>Short URL</h1>
             </div>
             <p class="tagline">Simple, Fast & Modern URL Shortener</p>
-            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
-                <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="12" cy="12" r="5" stroke-width="2"/>
-                    <line x1="12" y1="1" x2="12" y2="3" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="12" y1="21" x2="12" y2="23" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="1" y1="12" x2="3" y2="12" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="21" y1="12" x2="23" y2="12" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: none;">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
+            <div class="header-controls">
+                <button id="adminBtn" class="admin-btn" aria-label="Admin Login">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="7" r="4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span id="adminBtnText">Admin</span>
+                </button>
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="5" stroke-width="2"/>
+                        <line x1="12" y1="1" x2="12" y2="3" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="12" y1="21" x2="12" y2="23" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="1" y1="12" x2="3" y2="12" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="21" y1="12" x2="23" y2="12" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: none;">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
         </header>
 
         <!-- Main Content -->
@@ -155,8 +164,53 @@
                 <div id="recentUrls" class="recent-urls">
                     <p class="no-urls">No URLs created yet. Create your first short URL above!</p>
                 </div>
+                <div id="pagination" class="pagination" style="display: none;">
+                    <button id="prevPage" class="pagination-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="15 18 9 12 15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Previous
+                    </button>
+                    <span id="pageInfo" class="page-info">Page 1</span>
+                    <button id="nextPage" class="pagination-btn">
+                        Next
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="9 18 15 12 9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
             </section>
         </main>
+
+        <!-- Admin Login Modal -->
+        <div id="adminModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Admin Login</h2>
+                    <button id="closeModal" class="close-modal">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <line x1="18" y1="6" x2="6" y2="18" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="6" y1="6" x2="18" y2="18" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <form id="adminLoginForm" class="admin-login-form">
+                    <p class="modal-description">Enter admin password to access delete functionality</p>
+                    <input 
+                        type="password" 
+                        id="adminPassword" 
+                        placeholder="Admin password" 
+                        required
+                        autocomplete="off"
+                        class="admin-password-field"
+                    >
+                    <button type="submit" class="btn-primary">
+                        <span class="btn-text">Login</span>
+                    </button>
+                </form>
+                <div id="adminError" class="admin-error" style="display: none;"></div>
+            </div>
+        </div>
 
         <!-- Footer -->
         <footer class="footer">

@@ -13,15 +13,32 @@ const errorMessage = document.getElementById('errorMessage');
 const copyBtn = document.getElementById('copyBtn');
 const recentUrls = document.getElementById('recentUrls');
 const themeToggle = document.getElementById('themeToggle');
+const adminBtn = document.getElementById('adminBtn');
+const adminBtnText = document.getElementById('adminBtnText');
+const adminModal = document.getElementById('adminModal');
+const closeModal = document.getElementById('closeModal');
+const adminLoginForm = document.getElementById('adminLoginForm');
+const adminPassword = document.getElementById('adminPassword');
+const adminError = document.getElementById('adminError');
+const pagination = document.getElementById('pagination');
+const prevPage = document.getElementById('prevPage');
+const nextPage = document.getElementById('nextPage');
+const pageInfo = document.getElementById('pageInfo');
 
 // State
 let isLoading = false;
+let isAdmin = false;
+let adminToken = null;
+let currentPage = 1;
+let totalPages = 1;
+const ITEMS_PER_PAGE = 5;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadRecentUrls();
     loadStatistics();
     initTheme();
+    initAdmin();
 });
 
 // Theme Management
@@ -57,6 +74,95 @@ function updateThemeIcon(isDark) {
 
 // Theme toggle event listener
 themeToggle.addEventListener('click', toggleTheme);
+
+// Admin functionality
+function initAdmin() {
+    // Check if admin token exists in localStorage
+    const savedToken = localStorage.getItem('adminToken');
+    if (savedToken) {
+        adminToken = savedToken;
+        isAdmin = true;
+        updateAdminUI();
+    }
+}
+
+function updateAdminUI() {
+    if (isAdmin) {
+        adminBtnText.textContent = 'Logout';
+        adminBtn.classList.add('admin-logged-in');
+    } else {
+        adminBtnText.textContent = 'Admin';
+        adminBtn.classList.remove('admin-logged-in');
+    }
+    // Reload URLs to show/hide delete buttons
+    loadRecentUrls();
+}
+
+// Admin button click
+adminBtn.addEventListener('click', () => {
+    if (isAdmin) {
+        // Logout
+        isAdmin = false;
+        adminToken = null;
+        localStorage.removeItem('adminToken');
+        updateAdminUI();
+    } else {
+        // Show login modal
+        adminModal.style.display = 'flex';
+        adminPassword.focus();
+    }
+});
+
+// Close modal
+closeModal.addEventListener('click', () => {
+    adminModal.style.display = 'none';
+    adminPassword.value = '';
+    adminError.style.display = 'none';
+});
+
+// Close modal on outside click
+adminModal.addEventListener('click', (e) => {
+    if (e.target === adminModal) {
+        adminModal.style.display = 'none';
+        adminPassword.value = '';
+        adminError.style.display = 'none';
+    }
+});
+
+// Admin login form
+adminLoginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const password = adminPassword.value;
+    
+    try {
+        const response = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            isAdmin = true;
+            adminToken = data.token;
+            localStorage.setItem('adminToken', adminToken);
+            adminModal.style.display = 'none';
+            adminPassword.value = '';
+            adminError.style.display = 'none';
+            updateAdminUI();
+        } else {
+            adminError.textContent = data.error || 'Invalid password';
+            adminError.style.display = 'block';
+        }
+    } catch (error) {
+        adminError.textContent = 'Login failed. Please try again.';
+        adminError.style.display = 'block';
+    }
+});
 
 // Handle form submission
 urlForm.addEventListener('submit', async (e) => {
@@ -194,23 +300,50 @@ async function loadRecentUrls() {
         
         if (!urls || urls.length === 0) {
             recentUrls.innerHTML = '<p class="no-urls">No URLs created yet. Create your first short URL above!</p>';
+            pagination.style.display = 'none';
             return;
         }
         
-        // Sort by creation date (newest first) and limit to 5
-        const recentList = urls
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 5);
+        // Sort by creation date (newest first)
+        const sortedUrls = urls.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
-        recentUrls.innerHTML = recentList.map(url => createUrlItem(url)).join('');
+        // Calculate pagination
+        totalPages = Math.ceil(sortedUrls.length / ITEMS_PER_PAGE);
         
-        // Add event listeners to delete buttons
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const shortCode = btn.getAttribute('data-shortcode');
-                deleteUrl(shortCode);
+        // Ensure current page is valid
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+        if (currentPage < 1) {
+            currentPage = 1;
+        }
+        
+        // Get URLs for current page
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        const pageUrls = sortedUrls.slice(startIndex, endIndex);
+        
+        recentUrls.innerHTML = pageUrls.map(url => createUrlItem(url)).join('');
+        
+        // Show/hide pagination
+        if (totalPages > 1) {
+            pagination.style.display = 'flex';
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+            prevPage.disabled = currentPage === 1;
+            nextPage.disabled = currentPage === totalPages;
+        } else {
+            pagination.style.display = 'none';
+        }
+        
+        // Add event listeners to delete buttons (only for admin)
+        if (isAdmin) {
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const shortCode = btn.getAttribute('data-shortcode');
+                    deleteUrl(shortCode);
+                });
             });
-        });
+        }
         
         // Update statistics
         loadStatistics();
@@ -218,6 +351,21 @@ async function loadRecentUrls() {
         console.error('Error loading recent URLs:', error);
     }
 }
+
+// Pagination event listeners
+prevPage.addEventListener('click', () => {
+    if (currentPage > 1) {
+        currentPage--;
+        loadRecentUrls();
+    }
+});
+
+nextPage.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+        currentPage++;
+        loadRecentUrls();
+    }
+});
 
 // Create URL item HTML
 function createUrlItem(url) {
@@ -227,6 +375,17 @@ function createUrlItem(url) {
         month: 'short',
         day: 'numeric'
     });
+    
+    const deleteButton = isAdmin ? `
+        <button class="btn-delete" data-shortcode="${url.shortCode}" title="Delete">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polyline points="3 6 5 6 21 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="10" y1="11" x2="10" y2="17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="14" y1="11" x2="14" y2="17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    ` : '';
     
     return `
         <div class="url-item" data-shortcode="${url.shortCode}">
@@ -240,14 +399,7 @@ function createUrlItem(url) {
                         </svg>
                         ${url.clicks} ${url.clicks === 1 ? 'click' : 'clicks'}
                     </div>
-                    <button class="btn-delete" data-shortcode="${url.shortCode}" title="Delete">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <polyline points="3 6 5 6 21 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <line x1="10" y1="11" x2="10" y2="17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <line x1="14" y1="11" x2="14" y2="17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
+                    ${deleteButton}
                 </div>
             </div>
             <div class="url-original-text" title="${url.originalUrl}">${url.originalUrl}</div>
@@ -263,6 +415,11 @@ urlInput.focus();
 
 // Delete URL function
 async function deleteUrl(shortCode) {
+    if (!isAdmin) {
+        alert('Admin access required to delete URLs');
+        return;
+    }
+    
     if (!confirm('Are you sure you want to delete this short URL?')) {
         return;
     }
@@ -270,11 +427,33 @@ async function deleteUrl(shortCode) {
     try {
         const response = await fetch(`/api/urls/${shortCode}`, {
             method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${adminToken}`
+            }
         });
         
         if (!response.ok) {
             const data = await response.json();
+            
+            // If unauthorized, clear admin state
+            if (response.status === 401) {
+                isAdmin = false;
+                adminToken = null;
+                localStorage.removeItem('adminToken');
+                updateAdminUI();
+                alert('Session expired. Please login again.');
+                return;
+            }
+            
             throw new Error(data.error || 'Failed to delete URL');
+        }
+        
+        // Reset to first page if current page will be empty after deletion
+        const response2 = await fetch('/api/urls');
+        const urls = await response2.json();
+        const newTotalPages = Math.ceil((urls.length - 1) / ITEMS_PER_PAGE);
+        if (currentPage > newTotalPages && currentPage > 1) {
+            currentPage = newTotalPages;
         }
         
         // Reload recent URLs and statistics

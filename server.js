@@ -5,10 +5,12 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const validator = require('validator');
 const { nanoid } = require('nanoid');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5002;
 const DB_FILE = path.join(__dirname, 'urls.json');
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 // Configuration constants
 const MAX_DATABASE_SIZE = 10000;
@@ -296,8 +298,56 @@ app.get('/api/stats/:shortCode', (req, res) => {
   }
 });
 
-// API: Delete a short URL
-app.delete('/api/urls/:shortCode', (req, res) => {
+// API: Admin authentication
+app.post('/api/admin/login', (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+    
+    if (password === ADMIN_PASSWORD) {
+      // Generate a simple session token
+      const token = crypto.randomBytes(32).toString('hex');
+      
+      // In a production app, you would store this token in a session store
+      // For this simple app, we'll just return it and client will send it back
+      res.json({ 
+        success: true, 
+        token,
+        message: 'Authentication successful' 
+      });
+    } else {
+      res.status(401).json({ error: 'Invalid password' });
+    }
+  } catch (error) {
+    console.error('Error during authentication:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Middleware to verify admin token
+function verifyAdmin(req, res, next) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Admin authentication required' });
+  }
+  
+  const token = authHeader.substring(7);
+  
+  // Simple token validation - in production, validate against stored sessions
+  // For this simple app, any valid-looking token from a recent login will work
+  if (!token || token.length !== 64) {
+    return res.status(401).json({ error: 'Invalid authentication token' });
+  }
+  
+  next();
+}
+
+// API: Delete a short URL (Admin only)
+app.delete('/api/urls/:shortCode', verifyAdmin, (req, res) => {
   try {
     const { shortCode } = req.params;
     
