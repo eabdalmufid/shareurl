@@ -68,7 +68,14 @@ body {
     position: relative;
 }
 
+.container {
+    position: relative;
+}
+
 .theme-toggle {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
     background: var(--bg-card);
     border: 2px solid var(--border);
     border-radius: var(--radius-md);
@@ -557,6 +564,32 @@ body {
     
     .features {
         grid-template-columns: 1fr;
+    }
+    
+    /* Smaller feature cards on mobile */
+    .feature-icon {
+        font-size: 2rem;
+    }
+    
+    .feature-card h3 {
+        font-size: 0.95rem;
+    }
+    
+    .feature-card p {
+        font-size: 0.8rem;
+    }
+    
+    /* Smaller statistics on mobile */
+    .stats-section h2 {
+        font-size: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
     }
     
     .url-item-header {
