@@ -59,16 +59,13 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: var(--spacing-md);
+    position: relative;
 }
 
 /* Header */
 .header {
     text-align: center;
     padding: var(--spacing-xl) 0;
-    position: relative;
-}
-
-.container {
     position: relative;
 }
 
