@@ -448,12 +448,21 @@ async function deleteUrl(shortCode) {
             throw new Error(data.error || 'Failed to delete URL');
         }
         
-        // Reset to first page if current page will be empty after deletion
+        // Fetch updated URL list to calculate correct pagination
         const response2 = await fetch('/api/urls');
         const urls = await response2.json();
-        const newTotalPages = Math.ceil((urls.length - 1) / ITEMS_PER_PAGE);
-        if (currentPage > newTotalPages && currentPage > 1) {
-            currentPage = newTotalPages;
+        
+        if (urls.length === 0) {
+            // No URLs left, reset to page 1
+            currentPage = 1;
+        } else {
+            // Calculate new total pages
+            const newTotalPages = Math.ceil(urls.length / ITEMS_PER_PAGE);
+            
+            // If current page exceeds new total pages, go to last page
+            if (currentPage > newTotalPages) {
+                currentPage = Math.max(1, newTotalPages);
+            }
         }
         
         // Reload recent URLs and statistics

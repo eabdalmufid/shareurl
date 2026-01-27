@@ -12,6 +12,10 @@ const PORT = process.env.PORT || 5002;
 const DB_FILE = path.join(__dirname, 'urls.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
+// Store active admin sessions (in-memory for this simple app)
+// In production, use a proper session store like Redis
+const activeSessions = new Set();
+
 // Configuration constants
 const MAX_DATABASE_SIZE = 10000;
 const MAX_URL_LENGTH = 2048;
@@ -308,11 +312,12 @@ app.post('/api/admin/login', (req, res) => {
     }
     
     if (password === ADMIN_PASSWORD) {
-      // Generate a simple session token
+      // Generate a secure session token
       const token = crypto.randomBytes(32).toString('hex');
       
-      // In a production app, you would store this token in a session store
-      // For this simple app, we'll just return it and client will send it back
+      // Store token in active sessions
+      activeSessions.add(token);
+      
       res.json({ 
         success: true, 
         token,
@@ -337,10 +342,9 @@ function verifyAdmin(req, res, next) {
   
   const token = authHeader.substring(7);
   
-  // Simple token validation - in production, validate against stored sessions
-  // For this simple app, any valid-looking token from a recent login will work
-  if (!token || token.length !== 64) {
-    return res.status(401).json({ error: 'Invalid authentication token' });
+  // Validate token exists in active sessions
+  if (!activeSessions.has(token)) {
+    return res.status(401).json({ error: 'Invalid or expired authentication token' });
   }
   
   next();
