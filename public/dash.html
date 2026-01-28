@@ -6,30 +6,36 @@
     <title>Admin Dashboard - ShareURL</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Mobile-first approach - base styles for mobile */
         .login-container {
             max-width: 400px;
-            margin: 100px auto;
-            padding: 2rem;
+            margin: 2rem auto;
+            padding: 1rem;
         }
+        
         .login-card {
             background: var(--bg-card);
             border-radius: var(--radius-xl);
-            padding: var(--spacing-xl);
+            padding: var(--spacing-lg);
             box-shadow: var(--shadow-lg);
         }
+        
         .login-header {
             text-align: center;
             margin-bottom: var(--spacing-lg);
         }
+        
         .login-header h1 {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             color: var(--text-primary);
             margin-bottom: var(--spacing-xs);
         }
+        
         .login-header p {
             color: var(--text-secondary);
-            font-size: 0.875rem;
+            font-size: 0.8rem;
         }
+        
         .key-input {
             width: 100%;
             padding: var(--spacing-md) var(--spacing-lg);
@@ -40,25 +46,31 @@
             transition: all 0.3s ease;
             margin-bottom: var(--spacing-md);
         }
+        
         .key-input:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
+        
         .dashboard-hidden {
             display: none;
         }
+        
         .dashboard-header {
             text-align: center;
-            margin-bottom: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-sm) 0;
         }
+        
         .dashboard-header h1 {
-            font-size: 2rem;
+            font-size: 1.5rem;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: var(--spacing-xs);
+            margin-bottom: var(--spacing-sm);
         }
+        
         .logout-btn {
             padding: var(--spacing-xs) var(--spacing-md);
             background: var(--error);
@@ -68,40 +80,114 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
+            margin-top: var(--spacing-xs);
         }
+        
         .logout-btn:hover {
             opacity: 0.8;
         }
+        
         .section-header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-lg);
+            flex-direction: column;
+            gap: var(--spacing-xs);
+            margin-bottom: var(--spacing-md);
         }
+        
         .section-header h2 {
-            font-size: 1.5rem;
+            font-size: 1.125rem;
             color: var(--text-primary);
         }
+        
         .admin-section {
             background: var(--bg-card);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
             box-shadow: var(--shadow-md);
-            margin-bottom: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
         }
+        
+        .admin-section h2 {
+            font-size: 1.125rem;
+            margin-bottom: var(--spacing-md);
+        }
+        
         .item-list {
             display: flex;
             flex-direction: column;
-            gap: var(--spacing-md);
+            gap: var(--spacing-sm);
         }
+        
         .no-items {
             text-align: center;
             color: var(--text-secondary);
-            padding: var(--spacing-xl);
+            padding: var(--spacing-lg);
             background: var(--bg-main);
             border-radius: var(--radius-lg);
             border: 2px dashed var(--border);
+            font-size: 0.875rem;
+        }
+        
+        /* Tablet and up */
+        @media (min-width: 641px) {
+            .login-container {
+                margin: 100px auto;
+                padding: 2rem;
+            }
+            
+            .login-card {
+                padding: var(--spacing-xl);
+            }
+            
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .login-header p {
+                font-size: 0.875rem;
+            }
+            
+            .dashboard-header {
+                margin-bottom: var(--spacing-xl);
+            }
+            
+            .dashboard-header h1 {
+                font-size: 2rem;
+            }
+            
+            .logout-btn {
+                font-size: 0.875rem;
+            }
+            
+            .section-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: var(--spacing-lg);
+            }
+            
+            .section-header h2 {
+                font-size: 1.5rem;
+            }
+            
+            .admin-section {
+                padding: var(--spacing-xl);
+                border-radius: var(--radius-xl);
+                margin-bottom: var(--spacing-xl);
+            }
+            
+            .admin-section h2 {
+                font-size: 1.5rem;
+            }
+            
+            .item-list {
+                gap: var(--spacing-md);
+            }
+            
+            .no-items {
+                padding: var(--spacing-xl);
+            }
         }
     </style>
 </head>

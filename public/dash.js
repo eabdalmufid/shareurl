@@ -143,10 +143,10 @@ async function loadRecentUrls() {
             return;
         }
         
-        // Sort by creation date (newest first) and limit to 20
+        // Sort by creation date (newest first) and limit to 10
         const sortedUrls = urls
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 20);
+            .slice(0, 10);
         
         recentUrls.innerHTML = sortedUrls.map(url => createUrlItem(url)).join('');
         
@@ -181,10 +181,10 @@ async function loadRecentFiles() {
             return;
         }
         
-        // Sort by creation date (newest first) and limit to 20
+        // Sort by creation date (newest first) and limit to 10
         const sortedFiles = files
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 20);
+            .slice(0, 10);
         
         recentFiles.innerHTML = sortedFiles.map(file => createFileItem(file)).join('');
         
