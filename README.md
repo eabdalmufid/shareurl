@@ -102,7 +102,6 @@ http://localhost:5002
 - Use pagination controls to navigate through all items
 - Click on any short URL to visit the original destination
 - Click on any file link to download/view the file
-- Shows up to 5 items at a time with pagination
 
 ### Admin Dashboard:
 - Access the admin dashboard at `/dash` (e.g., `http://localhost:5002/dash`)
@@ -110,7 +109,7 @@ http://localhost:5002
 - **Search Functionality**: Search through URLs and files in real-time
 - **Pagination**: Navigate through all items with 5 items per page
 - **Delete Management**: Delete any malicious, inappropriate, or unwanted content
-- **Mobile-Responsive**: Full mobile-first design with touch-friendly controls
+- **Mobile-First Design**: Touch-friendly controls and responsive layout
 - **Separate Sections**: View and manage URLs and files independently
 - **Note:** Change the default admin password in production via the `ADMIN_PASSWORD` environment variable
 
