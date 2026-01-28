@@ -6,11 +6,14 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const validator = require('validator');
 const { nanoid } = require('nanoid');
+const multer = require('multer');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5002;
 const DB_FILE = path.join(__dirname, 'urls.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
 
 // Configuration constants
 const MAX_DATABASE_SIZE = 10000;
@@ -18,6 +21,31 @@ const MAX_URL_LENGTH = 2048;
 const MIN_URL_LENGTH = 10;
 const MAX_SHORTCODE_LENGTH = 20;
 const MAX_REQUEST_SIZE = '10kb';
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILES_COUNT = 5000;
+
+// Allowed file types (whitelist approach for security)
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'application/pdf',
+  'text/plain',
+  'text/csv',
+  'application/zip',
+  'application/json',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+];
+
+const ALLOWED_EXTENSIONS = [
+  '.jpg', '.jpeg', '.png', '.gif', '.webp',
+  '.pdf', '.txt', '.csv', '.zip',
+  '.json', '.doc', '.docx', '.xls', '.xlsx'
+];
 
 // Trust proxy - required for proper rate limiting behind reverse proxies
 // Set to 1 to trust the first proxy (recommended for most deployments)
@@ -59,9 +87,19 @@ const shortenLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiting for file uploads (strict)
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // Limit each IP to 5 file uploads per minute
+  message: { error: 'Too many file uploads, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Apply rate limiting
 app.use(limiter);
 app.use('/api/shorten', shortenLimiter);
+app.use('/api/upload', uploadLimiter);
 
 // Body parsing middleware with size limits
 app.use(express.json({ limit: MAX_REQUEST_SIZE }));
@@ -70,10 +108,81 @@ app.use(express.urlencoded({ extended: true, limit: MAX_REQUEST_SIZE }));
 // Static files
 app.use(express.static('public'));
 
+// Initialize uploads directory
+function initUploadDir() {
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true, mode: 0o755 });
+  }
+}
+
+// Configure multer for file uploads with security
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, UPLOAD_DIR);
+  },
+  filename: function (req, file, cb) {
+    // Generate secure random filename with original extension
+    const fileExt = path.extname(file.originalname).toLowerCase();
+    
+    // Validate extension doesn't contain path traversal or dangerous characters
+    if (fileExt.includes('..') || fileExt.includes('/') || fileExt.includes('\\') || fileExt.includes('\0')) {
+      return cb(new Error('Invalid file extension'), null);
+    }
+    
+    const randomName = crypto.randomBytes(16).toString('hex');
+    cb(null, randomName + fileExt);
+  }
+});
+
+// File filter for security
+const fileFilter = function (req, file, cb) {
+  // Check MIME type
+  if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    return cb(new Error('File type not allowed. Only images, PDFs, text files, and office documents are permitted.'), false);
+  }
+  
+  // Check file extension
+  const fileExt = path.extname(file.originalname).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
+    return cb(new Error('File extension not allowed.'), false);
+  }
+  
+  // Additional security: check for dangerous double extensions (e.g., .pdf.exe)
+  const baseName = path.basename(file.originalname, fileExt);
+  const dangerousExtensions = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.vbs', '.js', '.jar', '.app'];
+  
+  // Check if the basename ends with any dangerous extension
+  const hasDangerousDoubleExt = dangerousExtensions.some(ext => 
+    baseName.toLowerCase().endsWith(ext)
+  );
+  
+  if (hasDangerousDoubleExt) {
+    return cb(new Error('Files with double extensions are not allowed.'), false);
+  }
+  
+  cb(null, true);
+};
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+    files: 1 // Only allow one file per request
+  },
+  fileFilter: fileFilter
+});
+
 // Initialize database
 function initDB() {
   if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify({ urls: [], counter: 0 }, null, 2));
+    fs.writeFileSync(DB_FILE, JSON.stringify({ urls: [], files: [], counter: 0 }, null, 2));
+  } else {
+    // Migrate old database if needed
+    const db = readDB();
+    if (!db.files) {
+      db.files = [];
+      writeDB(db);
+    }
   }
 }
 
@@ -332,6 +441,210 @@ app.delete('/api/urls/:shortCode', (req, res) => {
   }
 });
 
+// API: Upload file
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    const db = readDB();
+    
+    // Check database size limit
+    if (db.files && db.files.length >= MAX_FILES_COUNT) {
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+      return res.status(429).json({ error: 'File storage limit reached. Please contact administrator.' });
+    }
+    
+    // Generate unique file code
+    let fileCode = nanoid(8);
+    let attempts = 0;
+    while (db.files && db.files.find(item => item.fileCode === fileCode) && attempts < 5) {
+      fileCode = nanoid(8);
+      attempts++;
+    }
+    
+    if (db.files && db.files.find(item => item.fileCode === fileCode)) {
+      fs.unlinkSync(req.file.path);
+      return res.status(500).json({ error: 'Unable to generate unique file code. Please try again.' });
+    }
+    
+    // Store file metadata
+    db.counter = (db.counter || 0) + 1;
+    
+    // Sanitize original filename to prevent XSS and other issues
+    const sanitizedOriginalName = path.basename(req.file.originalname)
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')  // Remove dangerous characters
+      .substring(0, 255);  // Limit length
+    
+    const fileData = {
+      id: db.counter,
+      fileCode,
+      originalName: sanitizedOriginalName,
+      fileName: req.file.filename,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      createdAt: new Date().toISOString(),
+      downloads: 0
+    };
+    
+    if (!db.files) {
+      db.files = [];
+    }
+    db.files.push(fileData);
+    writeDB(db);
+    
+    res.json({
+      fileUrl: `${req.protocol}://${req.get('host')}/f/${fileCode}`,
+      fileCode,
+      originalName: fileData.originalName,
+      size: fileData.size
+    });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    
+    // Clean up file if it was uploaded
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    // Handle multer errors
+    if (error.message.includes('File type not allowed') || 
+        error.message.includes('File extension not allowed') ||
+        error.message.includes('double extensions')) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.` });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API: Get all files
+app.get('/api/files', (req, res) => {
+  try {
+    const db = readDB();
+    res.json(db.files || []);
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API: Get file stats
+app.get('/api/filestats/:fileCode', (req, res) => {
+  try {
+    const db = readDB();
+    const file = db.files && db.files.find(item => item.fileCode === req.params.fileCode);
+    
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    res.json(file);
+  } catch (error) {
+    console.error('Error fetching file stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API: Delete a file (Admin only)
+app.delete('/api/files/:fileCode', (req, res) => {
+  try {
+    const { fileCode } = req.params;
+    const { key } = req.query;
+    
+    // Check admin key
+    if (!key || key !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+    
+    const db = readDB();
+    const fileIndex = db.files && db.files.findIndex(item => item.fileCode === fileCode);
+    
+    if (!db.files || fileIndex === -1) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Delete physical file
+    const filePath = path.join(UPLOAD_DIR, db.files[fileIndex].fileName);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    
+    // Remove from database
+    db.files.splice(fileIndex, 1);
+    writeDB(db);
+    
+    res.json({ message: 'File deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Serve uploaded file
+app.get('/f/:fileCode', (req, res) => {
+  try {
+    const fileCode = req.params.fileCode;
+    
+    // Validate file code format (similar to short code validation)
+    if (!fileCode || 
+        fileCode.includes('..') || 
+        fileCode.includes('/') || 
+        fileCode.includes('\\') ||
+        fileCode.length > MAX_SHORTCODE_LENGTH) {
+      return res.status(404).send('File not found');
+    }
+    
+    const db = readDB();
+    const fileData = db.files && db.files.find(item => item.fileCode === fileCode);
+    
+    if (!fileData) {
+      return res.status(404).send('File not found');
+    }
+    
+    const filePath = path.join(UPLOAD_DIR, fileData.fileName);
+    
+    // Security check: ensure file path is within upload directory
+    const resolvedPath = path.resolve(filePath);
+    const resolvedUploadDir = path.resolve(UPLOAD_DIR);
+    if (!resolvedPath.startsWith(resolvedUploadDir)) {
+      return res.status(403).send('Access denied');
+    }
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).send('File not found');
+    }
+    
+    // Increment download counter
+    fileData.downloads += 1;
+    writeDB(db);
+    
+    // Determine safe Content-Disposition based on file type
+    // Use 'attachment' for potentially dangerous types, 'inline' for safe display types
+    const safeInlineTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    const disposition = safeInlineTypes.includes(fileData.mimeType) ? 'inline' : 'attachment';
+    
+    // Set security headers for file download
+    res.setHeader('Content-Type', fileData.mimeType);
+    res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(fileData.originalName)}"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+    
+    // Send file
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error serving file:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
 // Redirect short URL
 app.get('/:shortCode', (req, res) => {
   try {
@@ -368,7 +681,9 @@ app.get('/:shortCode', (req, res) => {
 
 // Initialize and start server
 initDB();
+initUploadDir();
 
 app.listen(PORT, () => {
-  console.log(`🚀 Short URL server running on http://localhost:${PORT}`);
+  console.log(`🚀 ShareURL server running on http://localhost:${PORT}`);
+  console.log(`📁 File uploads enabled at /f/{code}`);
 });
