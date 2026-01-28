@@ -21,6 +21,14 @@ A simple, lightweight, and modern URL shortener application with file upload/sha
 - 📏 **Size Limit** - Maximum file size of 10MB
 - 📈 **Download Tracking** - Track how many times your files are downloaded
 
+### Admin Dashboard
+- 🎛️ **Dedicated Dashboard** - Separate admin interface at `/dash`
+- 🔍 **Real-Time Search** - Search through URLs and files instantly
+- 📄 **Pagination** - Navigate through all items with 5 per page
+- 🗑️ **Content Management** - Delete URLs and files with one click
+- 📱 **Mobile-First Design** - Touch-friendly controls and responsive layout
+- 🔐 **Password Protected** - Secure admin access with configurable password
+
 ### Security Features
 - 🛡️ **Security Hardened** - Protected against XSS, SSRF, DoS, and injection attacks
 - 🔐 **File Type Validation** - Whitelist-based file type checking (MIME type + extension)
@@ -89,18 +97,21 @@ http://localhost:5002
 5. Your file URL will be generated with format: `domain.com/f/{random_code}`
 6. Click "Copy" to share the file link
 
-### View Recent Items:
-- Scroll down to see recent shortened URLs and uploaded files
+### Recent Items Section:
+- View recent shortened URLs and uploaded files (5 items per page)
 - Use pagination controls to navigate through all items
 - Click on any short URL to visit the original destination
 - Click on any file link to download/view the file
 
-### Admin Functions:
-- Access admin mode by adding `?key=admin123` to the URL
-- Example: `http://localhost:5002?key=admin123`
-- Delete buttons will appear next to each URL and file
-- Delete any malicious, inappropriate, or unwanted content
-- **Note:** Change the default admin key in production via the `ADMIN_PASSWORD` environment variable
+### Admin Dashboard:
+- Access the admin dashboard at `/dash` (e.g., `http://localhost:5002/dash`)
+- Login with your admin password (default: `admin123`)
+- **Search Functionality**: Search through URLs and files in real-time
+- **Pagination**: Navigate through all items with 5 items per page
+- **Delete Management**: Delete any malicious, inappropriate, or unwanted content
+- **Mobile-First Design**: Touch-friendly controls and responsive layout
+- **Separate Sections**: View and manage URLs and files independently
+- **Note:** Change the default admin password in production via the `ADMIN_PASSWORD` environment variable
 
 ## 🛠️ Technology Stack
 
@@ -197,7 +208,9 @@ shareurl/
 ├── public/
 │   ├── index.html      # Main HTML file
 │   ├── style.css       # Responsive CSS styles
-│   └── script.js       # Frontend JavaScript
+│   ├── script.js       # Frontend JavaScript
+│   ├── dash.html       # Admin Dashboard HTML
+│   └── dash.js         # Dashboard JavaScript
 ├── uploads/            # Uploaded files storage (auto-generated)
 ├── server.js           # Express server & API
 ├── urls.json           # JSON database (auto-generated)
@@ -206,6 +219,13 @@ shareurl/
 ```
 
 ## 🔧 API Endpoints
+
+### Admin Dashboard
+```
+GET /dash
+# Access the admin dashboard interface
+# Requires admin password to login
+```
 
 ### Create Short URL
 ```
