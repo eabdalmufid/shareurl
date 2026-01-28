@@ -566,7 +566,12 @@ fileUploadForm.addEventListener('submit', async (e) => {
             fileResultSection.style.display = 'block';
             fileErrorSection.style.display = 'none';
             
+            // Hide loading state
+            btnText.style.display = 'inline';
+            btnLoading.style.display = 'none';
+            
             // Reset file selection (but keep result visible)
+            // This will disable the button since no file is selected
             resetFileUpload(true);
             
             // Reload data
@@ -574,12 +579,15 @@ fileUploadForm.addEventListener('submit', async (e) => {
             loadStatistics();
         } else {
             showFileError(data.error || 'Failed to upload file');
+            // Hide loading state and re-enable button on error
+            btnText.style.display = 'inline';
+            btnLoading.style.display = 'none';
+            uploadBtn.disabled = false;
         }
     } catch (error) {
         console.error('Upload error:', error);
         showFileError('Network error. Please try again.');
-    } finally {
-        // Hide loading state
+        // Hide loading state and re-enable button on error
         btnText.style.display = 'inline';
         btnLoading.style.display = 'none';
         uploadBtn.disabled = false;
