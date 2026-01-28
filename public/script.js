@@ -500,23 +500,15 @@ removeFileBtn.addEventListener('click', (e) => {
 });
 
 // Reset file upload
-function resetFileUpload() {
+function resetFileUpload(keepResultVisible = false) {
     selectedFile = null;
     fileInput.value = '';
     fileDropZone.style.display = 'block';
     filePreview.style.display = 'none';
     uploadBtn.disabled = true;
-    fileResultSection.style.display = 'none';
-    fileErrorSection.style.display = 'none';
-}
-
-// Reset file selection only (keep result visible)
-function resetFileSelection() {
-    selectedFile = null;
-    fileInput.value = '';
-    fileDropZone.style.display = 'block';
-    filePreview.style.display = 'none';
-    uploadBtn.disabled = true;
+    if (!keepResultVisible) {
+        fileResultSection.style.display = 'none';
+    }
     fileErrorSection.style.display = 'none';
 }
 
@@ -575,7 +567,7 @@ fileUploadForm.addEventListener('submit', async (e) => {
             fileErrorSection.style.display = 'none';
             
             // Reset file selection (but keep result visible)
-            resetFileSelection();
+            resetFileUpload(true);
             
             // Reload data
             loadRecentUrls();
