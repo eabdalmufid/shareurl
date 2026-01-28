@@ -108,6 +108,11 @@ app.use(express.urlencoded({ extended: true, limit: MAX_REQUEST_SIZE }));
 // Static files
 app.use(express.static('public'));
 
+// Serve admin dashboard page
+app.get('/dash', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dash.html'));
+});
+
 // Initialize uploads directory
 function initUploadDir() {
   if (!fs.existsSync(UPLOAD_DIR)) {

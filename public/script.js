@@ -11,40 +11,16 @@ const shortUrlDisplay = document.getElementById('shortUrlDisplay');
 const originalUrlDisplay = document.getElementById('originalUrlDisplay');
 const errorMessage = document.getElementById('errorMessage');
 const copyBtn = document.getElementById('copyBtn');
-const recentUrls = document.getElementById('recentUrls');
 const themeToggle = document.getElementById('themeToggle');
-const pagination = document.getElementById('pagination');
-const prevPage = document.getElementById('prevPage');
-const nextPage = document.getElementById('nextPage');
-const pageInfo = document.getElementById('pageInfo');
 
 // State
 let isLoading = false;
-let isAdmin = false;
-let currentPage = 1;
-let totalPages = 1;
-const ITEMS_PER_PAGE = 5;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    checkAdminKey();
-    loadRecentUrls();
     loadStatistics();
     initTheme();
 });
-
-// Check if admin key is in URL query parameters
-function checkAdminKey() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const key = urlParams.get('key');
-    
-    // Check if key matches admin password (admin123 by default)
-    if (key === 'admin123') {
-        isAdmin = true;
-    } else {
-        isAdmin = false;
-    }
-}
 
 // Theme Management
 function initTheme() {
@@ -131,9 +107,9 @@ async function shortenUrl(url, custom) {
         }
         
         showResult(data);
-        loadRecentUrls();
         urlInput.value = '';
         customCode.value = '';
+        loadStatistics(); // Update statistics after creating URL
     } catch (error) {
         // Handle network errors
         if (error.message.includes('Failed to fetch')) {
@@ -208,201 +184,39 @@ copyBtn.addEventListener('click', async () => {
     }
 });
 
-// Load recent URLs
-async function loadRecentUrls() {
-    try {
-        const response = await fetch('/api/urls');
-        const urls = await response.json();
-        
-        if (!urls || urls.length === 0) {
-            recentUrls.innerHTML = '<p class="no-urls">No URLs created yet. Create your first short URL above!</p>';
-            pagination.style.display = 'none';
-            return;
-        }
-        
-        // Sort by creation date (newest first)
-        const sortedUrls = urls.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        
-        // Calculate pagination
-        totalPages = Math.ceil(sortedUrls.length / ITEMS_PER_PAGE);
-        
-        // Ensure current page is valid
-        if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
-        if (currentPage < 1) {
-            currentPage = 1;
-        }
-        
-        // Get URLs for current page
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        const pageUrls = sortedUrls.slice(startIndex, endIndex);
-        
-        recentUrls.innerHTML = pageUrls.map(url => createUrlItem(url)).join('');
-        
-        // Show/hide pagination
-        if (totalPages > 1) {
-            pagination.style.display = 'flex';
-            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-            prevPage.disabled = currentPage === 1;
-            nextPage.disabled = currentPage === totalPages;
-        } else {
-            pagination.style.display = 'none';
-        }
-        
-        // Add event listeners to delete buttons (only for admin)
-        if (isAdmin) {
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const shortCode = btn.getAttribute('data-shortcode');
-                    deleteUrl(shortCode);
-                });
-            });
-        }
-        
-        // Update statistics
-        loadStatistics();
-    } catch (error) {
-        console.error('Error loading recent URLs:', error);
-    }
-}
-
-// Pagination event listeners
-prevPage.addEventListener('click', () => {
-    if (currentPage > 1) {
-        currentPage--;
-        loadRecentUrls();
-    }
-});
-
-nextPage.addEventListener('click', () => {
-    if (currentPage < totalPages) {
-        currentPage++;
-        loadRecentUrls();
-    }
-});
-
-// Create URL item HTML
-function createUrlItem(url) {
-    const shortUrl = `${window.location.origin}/${url.shortCode}`;
-    const date = new Date(url.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
-    
-    const deleteButton = isAdmin ? `
-        <button class="btn-delete" data-shortcode="${url.shortCode}" title="Delete">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <polyline points="3 6 5 6 21 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <line x1="10" y1="11" x2="10" y2="17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <line x1="14" y1="11" x2="14" y2="17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </button>
-    ` : '';
-    
-    return `
-        <div class="url-item" data-shortcode="${url.shortCode}">
-            <div class="url-item-header">
-                <a href="${shortUrl}" class="url-short" target="_blank">${shortUrl}</a>
-                <div class="url-actions">
-                    <div class="url-stats">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/>
-                            <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2"/>
-                        </svg>
-                        ${url.clicks} ${url.clicks === 1 ? 'click' : 'clicks'}
-                    </div>
-                    ${deleteButton}
-                </div>
-            </div>
-            <div class="url-original-text" title="${url.originalUrl}">${url.originalUrl}</div>
-            <div class="url-meta">
-                <span>Created: ${date}</span>
-            </div>
-        </div>
-    `;
-}
-
-// Auto-focus input on page load
-urlInput.focus();
-
-// Delete URL function
-async function deleteUrl(shortCode) {
-    if (!isAdmin) {
-        alert('Admin access required to delete URLs');
-        return;
-    }
-    
-    if (!confirm('Are you sure you want to delete this short URL?')) {
-        return;
-    }
-    
-    try {
-        // Get the admin key from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const key = urlParams.get('key');
-        
-        const response = await fetch(`/api/urls/${shortCode}?key=${key}`, {
-            method: 'DELETE'
-        });
-        
-        if (!response.ok) {
-            const data = await response.json();
-            
-            // If unauthorized, refresh the page to re-check admin status
-            if (response.status === 401) {
-                alert('Unauthorized. Please check your admin key.');
-                return;
-            }
-            
-            throw new Error(data.error || 'Failed to delete URL');
-        }
-        
-        // Fetch updated URL list to calculate correct pagination
-        const response2 = await fetch('/api/urls');
-        const urls = await response2.json();
-        
-        if (urls.length === 0) {
-            // No URLs left, reset to page 1
-            currentPage = 1;
-        } else {
-            // Calculate new total pages
-            const newTotalPages = Math.ceil(urls.length / ITEMS_PER_PAGE);
-            
-            // If current page exceeds new total pages, go to last page
-            if (currentPage > newTotalPages) {
-                currentPage = Math.max(1, newTotalPages);
-            }
-        }
-        
-        // Reload recent URLs and statistics
-        await loadRecentUrls();
-    } catch (error) {
-        alert('Error deleting URL: ' + error.message);
-    }
-}
-
 // Load statistics
 async function loadStatistics() {
     try {
-        const response = await fetch('/api/urls');
-        const urls = await response.json();
+        const [urlsResponse, filesResponse] = await Promise.all([
+            fetch('/api/urls'),
+            fetch('/api/files')
+        ]);
+        
+        if (!urlsResponse.ok || !filesResponse.ok) {
+            console.error('Error loading statistics');
+            return;
+        }
+        
+        const urls = await urlsResponse.json();
+        const files = await filesResponse.json();
         
         const totalUrls = urls.length;
-        const totalClicks = urls.reduce((sum, url) => sum + (url.clicks || 0), 0);
-        const avgClicks = totalUrls > 0 ? Math.round(totalClicks / totalUrls) : 0;
+        const totalFiles = files.length;
+        const totalUrlClicks = urls.reduce((sum, url) => sum + (url.clicks || 0), 0);
+        const totalFileDownloads = files.reduce((sum, file) => sum + (file.downloads || 0), 0);
+        const totalClicks = totalUrlClicks + totalFileDownloads;
         
         // Update statistics display
         document.getElementById('totalUrls').textContent = totalUrls;
+        document.getElementById('totalFiles').textContent = totalFiles;
         document.getElementById('totalClicks').textContent = totalClicks;
-        document.getElementById('avgClicks').textContent = avgClicks;
     } catch (error) {
         console.error('Error loading statistics:', error);
     }
 }
+
+// Auto-focus input on page load
+urlInput.focus();
 
 // =============================================
 // File Upload Functionality
@@ -575,7 +389,6 @@ fileUploadForm.addEventListener('submit', async (e) => {
             resetFileUpload(true);
             
             // Reload data
-            loadRecentUrls();
             loadStatistics();
         } else {
             showFileError(data.error || 'Failed to upload file');
