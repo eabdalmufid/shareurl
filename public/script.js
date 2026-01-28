@@ -22,19 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
 });
 
-// Check if admin key is in URL query parameters
-function checkAdminKey() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const key = urlParams.get('key');
-    
-    // Check if key matches admin password (admin123 by default)
-    if (key === 'admin123') {
-        return true;
-    } else {
-        return false;
-    }
-}
-
 // Theme Management
 function initTheme() {
     // Check for saved theme preference or default to light mode
@@ -204,6 +191,11 @@ async function loadStatistics() {
             fetch('/api/urls'),
             fetch('/api/files')
         ]);
+        
+        if (!urlsResponse.ok || !filesResponse.ok) {
+            console.error('Error loading statistics');
+            return;
+        }
         
         const urls = await urlsResponse.json();
         const files = await filesResponse.json();

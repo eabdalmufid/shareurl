@@ -37,11 +37,18 @@ loginForm.addEventListener('submit', async (e) => {
 // Verify and login
 async function verifyAndLogin(key) {
     try {
-        // Verify key by attempting to fetch URLs with admin privileges
-        const response = await fetch('/api/urls');
+        // Verify key by attempting a delete operation with the key
+        // We'll use a non-existent shortcode to test authentication
+        const testResponse = await fetch('/api/urls/test-verify-key?key=' + encodeURIComponent(key), {
+            method: 'DELETE'
+        });
         
-        if (!response.ok) {
-            throw new Error('Failed to verify admin key');
+        // If we get 404 (not found), the key is valid but URL doesn't exist - that's what we expect
+        // If we get 401 (unauthorized), the key is invalid
+        if (testResponse.status === 401) {
+            showLoginError('Invalid admin key');
+            sessionStorage.removeItem('adminKey');
+            return;
         }
         
         // Store key in session
@@ -55,7 +62,7 @@ async function verifyAndLogin(key) {
         // Load dashboard data
         await loadDashboard();
     } catch (error) {
-        showLoginError('Invalid admin key or server error');
+        showLoginError('Server error. Please try again.');
         sessionStorage.removeItem('adminKey');
     }
 }
@@ -95,6 +102,11 @@ async function loadStatistics() {
             fetch('/api/files')
         ]);
         
+        if (!urlsResponse.ok || !filesResponse.ok) {
+            console.error('Error loading statistics');
+            return;
+        }
+        
         const urls = await urlsResponse.json();
         const files = await filesResponse.json();
         
@@ -117,6 +129,13 @@ async function loadStatistics() {
 async function loadRecentUrls() {
     try {
         const response = await fetch('/api/urls');
+        
+        if (!response.ok) {
+            console.error('Error loading URLs');
+            recentUrls.innerHTML = '<p class="no-items">Error loading URLs</p>';
+            return;
+        }
+        
         const urls = await response.json();
         
         if (!urls || urls.length === 0) {
@@ -148,6 +167,13 @@ async function loadRecentUrls() {
 async function loadRecentFiles() {
     try {
         const response = await fetch('/api/files');
+        
+        if (!response.ok) {
+            console.error('Error loading files');
+            recentFiles.innerHTML = '<p class="no-items">Error loading files</p>';
+            return;
+        }
+        
         const files = await response.json();
         
         if (!files || files.length === 0) {
