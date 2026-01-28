@@ -42,46 +42,79 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Search event listeners
-    urlSearchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        filterUrls(searchTerm);
-    });
+    if (urlSearchInput) {
+        urlSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            filterUrls(searchTerm);
+        });
+    }
     
-    fileSearchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        filterFiles(searchTerm);
-    });
+    if (fileSearchInput) {
+        fileSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            filterFiles(searchTerm);
+        });
+    }
     
     // Pagination event listeners
-    urlPrevBtn.addEventListener('click', () => {
-        if (currentUrlPage > 1) {
-            currentUrlPage--;
-            renderUrls();
-        }
-    });
+    if (urlPrevBtn) {
+        urlPrevBtn.addEventListener('click', () => {
+            if (currentUrlPage > 1) {
+                currentUrlPage--;
+                renderUrls();
+            }
+        });
+    }
     
-    urlNextBtn.addEventListener('click', () => {
-        const totalPages = Math.ceil(filteredUrls.length / ITEMS_PER_PAGE);
-        if (currentUrlPage < totalPages) {
-            currentUrlPage++;
-            renderUrls();
-        }
-    });
+    if (urlNextBtn) {
+        urlNextBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredUrls.length / ITEMS_PER_PAGE);
+            if (currentUrlPage < totalPages) {
+                currentUrlPage++;
+                renderUrls();
+            }
+        });
+    }
     
-    filePrevBtn.addEventListener('click', () => {
-        if (currentFilePage > 1) {
-            currentFilePage--;
-            renderFiles();
-        }
-    });
+    if (filePrevBtn) {
+        filePrevBtn.addEventListener('click', () => {
+            if (currentFilePage > 1) {
+                currentFilePage--;
+                renderFiles();
+            }
+        });
+    }
     
-    fileNextBtn.addEventListener('click', () => {
-        const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
-        if (currentFilePage < totalPages) {
-            currentFilePage++;
-            renderFiles();
-        }
-    });
+    if (fileNextBtn) {
+        fileNextBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
+            if (currentFilePage < totalPages) {
+                currentFilePage++;
+                renderFiles();
+            }
+        });
+    }
+    
+    // Event delegation for delete buttons
+    if (recentUrls) {
+        recentUrls.addEventListener('click', async (e) => {
+            const deleteBtn = e.target.closest('.btn-delete-url');
+            if (deleteBtn) {
+                const shortCode = deleteBtn.getAttribute('data-shortcode');
+                await deleteUrl(shortCode);
+            }
+        });
+    }
+    
+    if (recentFiles) {
+        recentFiles.addEventListener('click', async (e) => {
+            const deleteBtn = e.target.closest('.btn-delete-file');
+            if (deleteBtn) {
+                const fileCode = deleteBtn.getAttribute('data-filecode');
+                await deleteFile(fileCode);
+            }
+        });
+    }
 });
 
 // Login form submission
@@ -254,14 +287,6 @@ function renderUrls() {
     urlPageInfo.textContent = `Page ${currentUrlPage} of ${totalPages}`;
     urlPrevBtn.disabled = currentUrlPage === 1;
     urlNextBtn.disabled = currentUrlPage === totalPages;
-    
-    // Add event listeners to delete buttons
-    document.querySelectorAll('.btn-delete-url').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const shortCode = btn.getAttribute('data-shortcode');
-            await deleteUrl(shortCode);
-        });
-    });
 }
 
 // Load recent files
@@ -330,14 +355,6 @@ function renderFiles() {
     filePageInfo.textContent = `Page ${currentFilePage} of ${totalPages}`;
     filePrevBtn.disabled = currentFilePage === 1;
     fileNextBtn.disabled = currentFilePage === totalPages;
-    
-    // Add event listeners to delete buttons
-    document.querySelectorAll('.btn-delete-file').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const fileCode = btn.getAttribute('data-filecode');
-            await deleteFile(fileCode);
-        });
-    });
 }
 
 // Create URL item HTML
