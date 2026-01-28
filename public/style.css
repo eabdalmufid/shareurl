@@ -253,7 +253,8 @@ body {
     margin-bottom: var(--spacing-md);
 }
 
-#shortUrlDisplay {
+#shortUrlDisplay,
+#fileUrlDisplay {
     flex: 1;
     padding: var(--spacing-md);
     background: white;
