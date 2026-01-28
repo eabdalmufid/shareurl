@@ -129,6 +129,78 @@
             font-size: 0.875rem;
         }
         
+        /* Search box - Mobile first */
+        .search-box {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: 0.875rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            outline: none;
+            transition: all 0.3s ease;
+            background: var(--bg-main);
+            color: var(--text-primary);
+        }
+        
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        /* Pagination controls - Mobile first */
+        .pagination-controls {
+            display: flex;
+            flex-direction: row;
+            gap: var(--spacing-xs);
+            margin-top: var(--spacing-md);
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .pagination-btn {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xxs);
+            flex: 0 0 auto;
+        }
+        
+        .pagination-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .page-info {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            padding: 0;
+            flex: 0 0 auto;
+        }
+        
         /* Tablet and up */
         @media (min-width: 641px) {
             .login-container {
@@ -187,6 +259,30 @@
             
             .no-items {
                 padding: var(--spacing-xl);
+            }
+            
+            .search-input {
+                font-size: 1rem;
+                padding: var(--spacing-md) var(--spacing-lg);
+            }
+            
+            .pagination-controls {
+                gap: var(--spacing-sm);
+            }
+            
+            .pagination-btn {
+                font-size: 0.875rem;
+                padding: var(--spacing-sm) var(--spacing-md);
+                min-width: 100px;
+            }
+            
+            .pagination-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .page-info {
+                font-size: 0.875rem;
             }
         }
     </style>
@@ -257,8 +353,32 @@
                 <div class="section-header">
                     <h2>🔗 Recent Short URLs</h2>
                 </div>
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="urlSearchInput" 
+                        class="search-input" 
+                        placeholder="Search URLs..."
+                        aria-label="Search short URLs"
+                    >
+                </div>
                 <div id="recentUrls" class="item-list">
                     <p class="no-items">No URLs found</p>
+                </div>
+                <div id="urlPagination" class="pagination-controls" style="display: none;">
+                    <button id="urlPrevBtn" class="pagination-btn" aria-label="Go to previous page">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="15 18 9 12 15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Previous
+                    </button>
+                    <span id="urlPageInfo" class="page-info">Page 1</span>
+                    <button id="urlNextBtn" class="pagination-btn" aria-label="Go to next page">
+                        Next
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="9 18 15 12 9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </section>
 
@@ -267,8 +387,32 @@
                 <div class="section-header">
                     <h2>📁 Recent Upload Files</h2>
                 </div>
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="fileSearchInput" 
+                        class="search-input" 
+                        placeholder="Search files..."
+                        aria-label="Search upload files"
+                    >
+                </div>
                 <div id="recentFiles" class="item-list">
                     <p class="no-items">No files found</p>
+                </div>
+                <div id="filePagination" class="pagination-controls" style="display: none;">
+                    <button id="filePrevBtn" class="pagination-btn" aria-label="Go to previous page">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="15 18 9 12 15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Previous
+                    </button>
+                    <span id="filePageInfo" class="page-info">Page 1</span>
+                    <button id="fileNextBtn" class="pagination-btn" aria-label="Go to next page">
+                        Next
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="9 18 15 12 9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </section>
         </div>

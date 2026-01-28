@@ -9,8 +9,29 @@ const logoutBtn = document.getElementById('logoutBtn');
 const recentUrls = document.getElementById('recentUrls');
 const recentFiles = document.getElementById('recentFiles');
 
+// Pagination and search elements
+const urlSearchInput = document.getElementById('urlSearchInput');
+const fileSearchInput = document.getElementById('fileSearchInput');
+const urlPagination = document.getElementById('urlPagination');
+const filePagination = document.getElementById('filePagination');
+const urlPrevBtn = document.getElementById('urlPrevBtn');
+const urlNextBtn = document.getElementById('urlNextBtn');
+const urlPageInfo = document.getElementById('urlPageInfo');
+const filePrevBtn = document.getElementById('filePrevBtn');
+const fileNextBtn = document.getElementById('fileNextBtn');
+const filePageInfo = document.getElementById('filePageInfo');
+
 // Admin state
 let adminKey = null;
+
+// Pagination state
+const ITEMS_PER_PAGE = 5;
+let urlsData = [];
+let filesData = [];
+let filteredUrls = [];
+let filteredFiles = [];
+let currentUrlPage = 1;
+let currentFilePage = 1;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,6 +39,81 @@ document.addEventListener('DOMContentLoaded', () => {
     const storedKey = sessionStorage.getItem('adminKey');
     if (storedKey) {
         verifyAndLogin(storedKey);
+    }
+    
+    // Search event listeners
+    if (urlSearchInput) {
+        urlSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            filterUrls(searchTerm);
+        });
+    }
+    
+    if (fileSearchInput) {
+        fileSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            filterFiles(searchTerm);
+        });
+    }
+    
+    // Pagination event listeners
+    if (urlPrevBtn) {
+        urlPrevBtn.addEventListener('click', () => {
+            if (currentUrlPage > 1) {
+                currentUrlPage--;
+                renderUrls();
+            }
+        });
+    }
+    
+    if (urlNextBtn) {
+        urlNextBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredUrls.length / ITEMS_PER_PAGE);
+            if (currentUrlPage < totalPages) {
+                currentUrlPage++;
+                renderUrls();
+            }
+        });
+    }
+    
+    if (filePrevBtn) {
+        filePrevBtn.addEventListener('click', () => {
+            if (currentFilePage > 1) {
+                currentFilePage--;
+                renderFiles();
+            }
+        });
+    }
+    
+    if (fileNextBtn) {
+        fileNextBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
+            if (currentFilePage < totalPages) {
+                currentFilePage++;
+                renderFiles();
+            }
+        });
+    }
+    
+    // Event delegation for delete buttons
+    if (recentUrls) {
+        recentUrls.addEventListener('click', async (e) => {
+            const deleteBtn = e.target.closest('.btn-delete-url');
+            if (deleteBtn) {
+                const shortCode = deleteBtn.getAttribute('data-shortcode');
+                await deleteUrl(shortCode);
+            }
+        });
+    }
+    
+    if (recentFiles) {
+        recentFiles.addEventListener('click', async (e) => {
+            const deleteBtn = e.target.closest('.btn-delete-file');
+            if (deleteBtn) {
+                const fileCode = deleteBtn.getAttribute('data-filecode');
+                await deleteFile(fileCode);
+            }
+        });
     }
 });
 
@@ -140,27 +236,57 @@ async function loadRecentUrls() {
         
         if (!urls || urls.length === 0) {
             recentUrls.innerHTML = '<p class="no-items">No URLs found</p>';
+            urlPagination.style.display = 'none';
             return;
         }
         
-        // Sort by creation date (newest first) and limit to 10
-        const sortedUrls = urls
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 10);
+        // Sort by creation date (newest first)
+        urlsData = urls.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        filteredUrls = [...urlsData];
+        currentUrlPage = 1;
         
-        recentUrls.innerHTML = sortedUrls.map(url => createUrlItem(url)).join('');
-        
-        // Add event listeners to delete buttons
-        document.querySelectorAll('.btn-delete-url').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const shortCode = btn.getAttribute('data-shortcode');
-                await deleteUrl(shortCode);
-            });
-        });
+        renderUrls();
     } catch (error) {
         console.error('Error loading recent URLs:', error);
         recentUrls.innerHTML = '<p class="no-items">Error loading URLs</p>';
     }
+}
+
+// Filter URLs based on search term
+function filterUrls(searchTerm) {
+    if (!searchTerm) {
+        filteredUrls = [...urlsData];
+    } else {
+        filteredUrls = urlsData.filter(url => {
+            const shortUrl = url.shortCode.toLowerCase();
+            const originalUrl = url.originalUrl.toLowerCase();
+            return shortUrl.includes(searchTerm) || originalUrl.includes(searchTerm);
+        });
+    }
+    currentUrlPage = 1;
+    renderUrls();
+}
+
+// Render URLs with pagination
+function renderUrls() {
+    if (filteredUrls.length === 0) {
+        recentUrls.innerHTML = '<p class="no-items">No URLs found</p>';
+        urlPagination.style.display = 'none';
+        return;
+    }
+    
+    const totalPages = Math.ceil(filteredUrls.length / ITEMS_PER_PAGE);
+    const startIndex = (currentUrlPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const pageUrls = filteredUrls.slice(startIndex, endIndex);
+    
+    recentUrls.innerHTML = pageUrls.map(url => createUrlItem(url)).join('');
+    
+    // Update pagination controls
+    urlPagination.style.display = 'flex';
+    urlPageInfo.textContent = `Page ${currentUrlPage} of ${totalPages}`;
+    urlPrevBtn.disabled = currentUrlPage === 1;
+    urlNextBtn.disabled = currentUrlPage === totalPages;
 }
 
 // Load recent files
@@ -178,27 +304,57 @@ async function loadRecentFiles() {
         
         if (!files || files.length === 0) {
             recentFiles.innerHTML = '<p class="no-items">No files found</p>';
+            filePagination.style.display = 'none';
             return;
         }
         
-        // Sort by creation date (newest first) and limit to 10
-        const sortedFiles = files
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 10);
+        // Sort by creation date (newest first)
+        filesData = files.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        filteredFiles = [...filesData];
+        currentFilePage = 1;
         
-        recentFiles.innerHTML = sortedFiles.map(file => createFileItem(file)).join('');
-        
-        // Add event listeners to delete buttons
-        document.querySelectorAll('.btn-delete-file').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const fileCode = btn.getAttribute('data-filecode');
-                await deleteFile(fileCode);
-            });
-        });
+        renderFiles();
     } catch (error) {
         console.error('Error loading recent files:', error);
         recentFiles.innerHTML = '<p class="no-items">Error loading files</p>';
     }
+}
+
+// Filter files based on search term
+function filterFiles(searchTerm) {
+    if (!searchTerm) {
+        filteredFiles = [...filesData];
+    } else {
+        filteredFiles = filesData.filter(file => {
+            const fileCode = file.fileCode.toLowerCase();
+            const originalName = file.originalName.toLowerCase();
+            return fileCode.includes(searchTerm) || originalName.includes(searchTerm);
+        });
+    }
+    currentFilePage = 1;
+    renderFiles();
+}
+
+// Render files with pagination
+function renderFiles() {
+    if (filteredFiles.length === 0) {
+        recentFiles.innerHTML = '<p class="no-items">No files found</p>';
+        filePagination.style.display = 'none';
+        return;
+    }
+    
+    const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
+    const startIndex = (currentFilePage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const pageFiles = filteredFiles.slice(startIndex, endIndex);
+    
+    recentFiles.innerHTML = pageFiles.map(file => createFileItem(file)).join('');
+    
+    // Update pagination controls
+    filePagination.style.display = 'flex';
+    filePageInfo.textContent = `Page ${currentFilePage} of ${totalPages}`;
+    filePrevBtn.disabled = currentFilePage === 1;
+    fileNextBtn.disabled = currentFilePage === totalPages;
 }
 
 // Create URL item HTML
