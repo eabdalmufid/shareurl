@@ -587,15 +587,30 @@ fileUploadForm.addEventListener('submit', async (e) => {
 });
 
 // Copy file URL
-copyFileBtn.addEventListener('click', () => {
-    fileUrlDisplay.select();
-    document.execCommand('copy');
-    
+copyFileBtn.addEventListener('click', async () => {
     const copyText = copyFileBtn.querySelector('.copy-text');
     const originalText = copyText.textContent;
-    copyText.textContent = 'Copied!';
     
-    setTimeout(() => {
-        copyText.textContent = originalText;
-    }, 2000);
+    try {
+        // Use modern Clipboard API if available
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(fileUrlDisplay.value);
+        } else {
+            // Fallback for older browsers
+            fileUrlDisplay.select();
+            document.execCommand('copy');
+        }
+        
+        copyText.textContent = 'Copied!';
+        
+        setTimeout(() => {
+            copyText.textContent = originalText;
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        copyText.textContent = 'Failed';
+        setTimeout(() => {
+            copyText.textContent = originalText;
+        }, 2000);
+    }
 });

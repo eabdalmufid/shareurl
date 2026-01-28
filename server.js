@@ -123,6 +123,12 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     // Generate secure random filename with original extension
     const fileExt = path.extname(file.originalname).toLowerCase();
+    
+    // Validate extension doesn't contain path traversal or dangerous characters
+    if (fileExt.includes('..') || fileExt.includes('/') || fileExt.includes('\\') || fileExt.includes('\0')) {
+      return cb(new Error('Invalid file extension'), null);
+    }
+    
     const randomName = crypto.randomBytes(16).toString('hex');
     cb(null, randomName + fileExt);
   }
@@ -141,9 +147,16 @@ const fileFilter = function (req, file, cb) {
     return cb(new Error('File extension not allowed.'), false);
   }
   
-  // Additional security: check for double extensions
+  // Additional security: check for dangerous double extensions (e.g., .pdf.exe)
   const baseName = path.basename(file.originalname, fileExt);
-  if (baseName.includes('.')) {
+  const dangerousExtensions = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.vbs', '.js', '.jar', '.app'];
+  
+  // Check if the basename ends with any dangerous extension
+  const hasDangerousDoubleExt = dangerousExtensions.some(ext => 
+    baseName.toLowerCase().endsWith(ext)
+  );
+  
+  if (hasDangerousDoubleExt) {
     return cb(new Error('Files with double extensions are not allowed.'), false);
   }
   
@@ -460,10 +473,15 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
     // Store file metadata
     db.counter = (db.counter || 0) + 1;
     
+    // Sanitize original filename to prevent XSS and other issues
+    const sanitizedOriginalName = path.basename(req.file.originalname)
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')  // Remove dangerous characters
+      .substring(0, 255);  // Limit length
+    
     const fileData = {
       id: db.counter,
       fileCode,
-      originalName: path.basename(req.file.originalname),
+      originalName: sanitizedOriginalName,
       fileName: req.file.filename,
       mimeType: req.file.mimetype,
       size: req.file.size,
@@ -608,10 +626,16 @@ app.get('/f/:fileCode', (req, res) => {
     fileData.downloads += 1;
     writeDB(db);
     
+    // Determine safe Content-Disposition based on file type
+    // Use 'attachment' for potentially dangerous types, 'inline' for safe display types
+    const safeInlineTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    const disposition = safeInlineTypes.includes(fileData.mimeType) ? 'inline' : 'attachment';
+    
     // Set security headers for file download
     res.setHeader('Content-Type', fileData.mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileData.originalName)}"`);
+    res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(fileData.originalName)}"`);
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
     
     // Send file
     res.sendFile(filePath);
