@@ -510,6 +510,16 @@ function resetFileUpload() {
     fileErrorSection.style.display = 'none';
 }
 
+// Reset file selection only (keep result visible)
+function resetFileSelection() {
+    selectedFile = null;
+    fileInput.value = '';
+    fileDropZone.style.display = 'block';
+    filePreview.style.display = 'none';
+    uploadBtn.disabled = true;
+    fileErrorSection.style.display = 'none';
+}
+
 // Format file size
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
@@ -564,10 +574,8 @@ fileUploadForm.addEventListener('submit', async (e) => {
             fileResultSection.style.display = 'block';
             fileErrorSection.style.display = 'none';
             
-            // Reset form
-            setTimeout(() => {
-                resetFileUpload();
-            }, 100);
+            // Reset file selection (but keep result visible)
+            resetFileSelection();
             
             // Reload data
             loadRecentUrls();
