@@ -479,15 +479,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--spacing-xs);
+    padding: var(--spacing-xxs);
     background: transparent;
     color: var(--error);
     border: 1px solid var(--error);
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.2s ease;
-    min-width: 32px;
-    height: 32px;
+    min-width: 28px;
+    height: 28px;
 }
 
 .btn-delete:hover {
@@ -736,15 +736,22 @@ body {
 @media (max-width: 640px) {
     .pagination {
         flex-direction: row;
-        flex-wrap: wrap;
-        gap: var(--spacing-xs);
+        justify-content: space-between;
+        gap: var(--spacing-sm);
     }
     
     .pagination-btn {
         padding: 0.5rem 0.75rem;
         font-size: 0.8rem;
-        flex: 1;
-        min-width: 80px;
+        min-width: 90px;
+    }
+    
+    .pagination-btn:first-child {
+        margin-right: auto;
+    }
+    
+    .pagination-btn:last-child {
+        margin-left: auto;
     }
     
     .page-info {
